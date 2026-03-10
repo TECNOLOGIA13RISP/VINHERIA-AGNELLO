@@ -29,6 +29,13 @@
         <a href="#">Rose</a>
         <a href="#">Tintos</a>
         <a href="#">Espumantes</a>
+        <button class="admin-toggle" type="button" data-admin-toggle aria-controls="admin-panel" aria-expanded="false">
+          Acesso ADM
+        </button>
+        <button class="cart-toggle" type="button" data-cart-toggle aria-controls="cart-panel" aria-expanded="false">
+          Carrinho
+          <span data-cart-count>0</span>
+        </button>
       </nav>
     </header>
 
@@ -36,11 +43,11 @@
       <section class="kpi-grid" aria-label="Indicadores">
         <article class="kpi-card">
           <p>Total de vinhos</p>
-          <strong>142</strong>
+          <strong data-total-wines>0</strong>
         </article>
         <article class="kpi-card">
           <p>Disponiveis</p>
-          <strong>141</strong>
+          <strong data-available-wines>0</strong>
         </article>
         <article class="kpi-card">
           <p>Categorias</p>
@@ -441,12 +448,159 @@
       <p class="cart-feedback" data-cart-feedback aria-live="polite"></p>
     </main>
 
-    <script>
+    <div class="cart-overlay" data-cart-overlay></div>
+    <aside class="cart-panel" id="cart-panel" aria-hidden="true" data-cart-panel>
+      <header class="cart-panel-header">
+        <h2>Carrinho</h2>
+        <button class="cart-close" type="button" aria-label="Fechar carrinho" data-cart-close>&times;</button>
+      </header>
+      <p class="cart-empty" data-cart-empty>Nenhum vinho adicionado ainda.</p>
+      <ul class="cart-items is-hidden" data-cart-items></ul>
+      <footer class="cart-summary">
+        <span>Total estimado</span>
+        <strong data-cart-total>R$ 0,00</strong>
+      </footer>
+    </aside>
+
+    <div class="admin-overlay" data-admin-overlay></div>
+    <aside class="admin-panel" id="admin-panel" aria-hidden="true" data-admin-panel>
+      <header class="admin-panel-header">
+        <h2>Painel ADM</h2>
+        <button class="admin-close" type="button" aria-label="Fechar painel administrador" data-admin-close>&times;</button>
+      </header>
+      <p class="admin-session" data-admin-session></p>
+
+      <section class="admin-auth" data-admin-auth>
+        <h3>Acesso administrativo</h3>
+        <p>Use `admin/admin` para cadastro ou `GUILHERME GOMES OLIVEIRA/123` para usuario comum.</p>
+        <form class="admin-form" data-admin-login-form>
+          <label for="admin-user">Usuario</label>
+          <input id="admin-user" name="username" type="text" placeholder="admin ou GUILHERME GOMES OLIVEIRA" required />
+
+          <label for="admin-pass">Senha</label>
+          <input id="admin-pass" name="password" type="password" placeholder="Sua senha" required />
+
+          <button type="submit">Entrar</button>
+        </form>
+      </section>
+
+      <section class="admin-controls is-hidden" data-admin-controls>
+        <article class="admin-card">
+          <h3>Adicionar vinho</h3>
+          <form class="admin-form" data-admin-wine-form>
+            <label for="wine-name">Nome</label>
+            <input id="wine-name" name="name" type="text" placeholder="Ex.: Pinot Noir Reserva" required />
+
+            <label for="wine-type">Tipo de vinho</label>
+            <select id="wine-type" name="type" required>
+              <option value="brancos">Brancos</option>
+              <option value="rose">Rose</option>
+              <option value="tintos">Tintos</option>
+              <option value="espumantes">Espumantes</option>
+            </select>
+
+            <label for="wine-country">Pais de origem</label>
+            <input id="wine-country" name="country" type="text" placeholder="Ex.: Italia" required />
+
+            <label for="wine-price">Preco (R$)</label>
+            <input id="wine-price" name="price" type="number" min="0" step="0.01" placeholder="Ex.: 89.90" required />
+
+            <label for="wine-description">Descricao</label>
+            <textarea id="wine-description" name="description" rows="4" placeholder="Breve resumo do vinho..." required></textarea>
+
+            <label for="wine-image-url">Imagem (URL)</label>
+            <input id="wine-image-url" name="imageUrl" type="url" placeholder="https://..." />
+
+            <label for="wine-image-file">Ou envie uma imagem</label>
+            <input id="wine-image-file" name="imageFile" type="file" accept="image/*" />
+
+            <label for="wine-available">Disponibilidade</label>
+            <select id="wine-available" name="available">
+              <option value="true">Disponivel</option>
+              <option value="false">Indisponivel</option>
+            </select>
+
+            <button type="submit">Adicionar vinho</button>
+          </form>
+        </article>
+
+        <article class="admin-card">
+          <h3>Vinhos adicionados</h3>
+          <p class="admin-help">Itens cadastrados pelo administrador nesta loja.</p>
+          <ul class="admin-added-list" data-admin-added-list></ul>
+        </article>
+      </section>
+
+      <section class="admin-user-view is-hidden" data-admin-user-view>
+        <article class="admin-card">
+          <h3>Acesso de usuario comum</h3>
+          <p class="admin-help">Este perfil pode navegar e comprar, mas nao pode cadastrar vinhos.</p>
+        </article>
+      </section>
+
+      <button class="admin-logout is-hidden" type="button" data-admin-logout>Encerrar sessao</button>
+      <p class="admin-feedback" data-admin-feedback aria-live="polite"></p>
+    </aside>
+
+        <script>
       const cartCountTargets = document.querySelectorAll('[data-cart-count]');
-      const addCartButtons = document.querySelectorAll('[data-add-cart]');
       const cartFeedback = document.querySelector('[data-cart-feedback]');
       const carousels = document.querySelectorAll('[data-carousel]');
+      const totalWinesTarget = document.querySelector('[data-total-wines]');
+      const availableWinesTarget = document.querySelector('[data-available-wines]');
+      const cartToggleButtons = document.querySelectorAll('[data-cart-toggle]');
+      const cartPanel = document.querySelector('[data-cart-panel]');
+      const cartOverlay = document.querySelector('[data-cart-overlay]');
+      const cartCloseButton = document.querySelector('[data-cart-close]');
+      const cartItemsContainer = document.querySelector('[data-cart-items]');
+      const cartEmptyMessage = document.querySelector('[data-cart-empty]');
+      const cartTotalElement = document.querySelector('[data-cart-total]');
+      const adminToggleButton = document.querySelector('[data-admin-toggle]');
+      const adminPanel = document.querySelector('[data-admin-panel]');
+      const adminOverlay = document.querySelector('[data-admin-overlay]');
+      const adminCloseButton = document.querySelector('[data-admin-close]');
+      const adminSessionInfo = document.querySelector('[data-admin-session]');
+      const adminAuthSection = document.querySelector('[data-admin-auth]');
+      const adminControlsSection = document.querySelector('[data-admin-controls]');
+      const adminUserViewSection = document.querySelector('[data-admin-user-view]');
+      const adminLoginForm = document.querySelector('[data-admin-login-form]');
+      const adminWineForm = document.querySelector('[data-admin-wine-form]');
+      const adminLogoutButtons = document.querySelectorAll('[data-admin-logout]');
+      const adminFeedback = document.querySelector('[data-admin-feedback]');
+      const adminAddedList = document.querySelector('[data-admin-added-list]');
+
+      const ADMIN_STORAGE_KEY = 'vinheria_admin_wines_v1';
+      const AUTH_ROLE_KEY = 'vinheria_auth_role_v1';
+      const ADMIN_CREDENTIALS = {
+        username: 'admin',
+        password: 'admin',
+      };
+      const COMMON_USER_CREDENTIALS = {
+        username: 'GUILHERME GOMES OLIVEIRA',
+        displayName: 'GUILHERME GOMES OLIVEIRA',
+        password: '123',
+      };
+
+      const wineTypeLabels = {
+        brancos: 'Branco',
+        rose: 'Rose',
+        tintos: 'Tinto',
+        espumantes: 'Espumante',
+      };
+
+      const wineTypeSectionIds = {
+        brancos: 'categoria-brancos',
+        rose: 'categoria-rose',
+        tintos: 'categoria-tintos',
+        espumantes: 'categoria-espumantes',
+      };
+
+      const cartItems = new Map();
+      const carouselState = new WeakMap();
+      const adminWines = [];
       let cartCount = 0;
+      let cartFeedbackTimer;
+      let adminFeedbackTimer;
 
       const applyCartCount = () => {
         cartCountTargets.forEach((target) => {
@@ -454,17 +608,470 @@
         });
       };
 
-      addCartButtons.forEach((button) => {
-        button.addEventListener('click', () => {
-          const wineName = button.getAttribute('data-wine') || 'Vinho selecionado';
-          cartCount += 1;
-          applyCartCount();
+      const applyWineStats = () => {
+        const cards = document.querySelectorAll('.wine-card');
+        const totalWines = cards.length;
+        let availableWines = 0;
 
-          if (cartFeedback) {
-            cartFeedback.textContent = `${wineName} adicionado ao carrinho.`;
+        cards.forEach((card) => {
+          if (card.getAttribute('data-available') !== 'false') {
+            availableWines += 1;
           }
         });
-      });
+
+        if (totalWinesTarget) {
+          totalWinesTarget.textContent = String(totalWines);
+        }
+
+        if (availableWinesTarget) {
+          availableWinesTarget.textContent = String(availableWines);
+        }
+      };
+
+      const parseCurrency = (value) => {
+        const normalized = value.replace(/[^\d.,]/g, '').replace(/\./g, '').replace(',', '.');
+        const amount = Number.parseFloat(normalized);
+        return Number.isFinite(amount) ? amount : 0;
+      };
+
+      const formatCurrency = (value) => {
+        return new Intl.NumberFormat('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+        }).format(value);
+      };
+
+      function setAdminOpen(isOpen, options = {}) {
+        const { closeCart = true } = options;
+
+        if (!adminPanel || !adminOverlay) {
+          return;
+        }
+
+        if (isOpen && closeCart) {
+          setCartOpen(false, { closeAdmin: false });
+        }
+
+        adminPanel.classList.toggle('is-open', isOpen);
+        adminPanel.setAttribute('aria-hidden', String(!isOpen));
+        adminOverlay.classList.toggle('is-visible', isOpen);
+        document.body.classList.toggle('cart-open', isOpen || cartPanel?.classList.contains('is-open'));
+
+        if (adminToggleButton) {
+          adminToggleButton.setAttribute('aria-expanded', String(isOpen));
+        }
+      }
+
+      function setCartOpen(isOpen, options = {}) {
+        const { closeAdmin = true } = options;
+
+        if (!cartPanel || !cartOverlay) {
+          return;
+        }
+
+        if (isOpen && closeAdmin) {
+          setAdminOpen(false, { closeCart: false });
+        }
+
+        cartPanel.classList.toggle('is-open', isOpen);
+        cartPanel.setAttribute('aria-hidden', String(!isOpen));
+        cartOverlay.classList.toggle('is-visible', isOpen);
+        document.body.classList.toggle('cart-open', isOpen || adminPanel?.classList.contains('is-open'));
+        cartToggleButtons.forEach((button) => {
+          button.setAttribute('aria-expanded', String(isOpen));
+        });
+      }
+
+      const showTemporaryCartFeedback = (message) => {
+        if (!cartFeedback) {
+          return;
+        }
+
+        cartFeedback.textContent = message;
+        cartFeedback.classList.add('is-visible');
+
+        window.clearTimeout(cartFeedbackTimer);
+        cartFeedbackTimer = window.setTimeout(() => {
+          cartFeedback.classList.remove('is-visible');
+          cartFeedback.textContent = '';
+        }, 2600);
+      };
+
+      const showAdminFeedback = (message, isError = false) => {
+        if (!adminFeedback) {
+          return;
+        }
+
+        adminFeedback.textContent = message;
+        adminFeedback.classList.toggle('is-error', isError);
+        adminFeedback.classList.add('is-visible');
+
+        window.clearTimeout(adminFeedbackTimer);
+        adminFeedbackTimer = window.setTimeout(() => {
+          adminFeedback.classList.remove('is-visible');
+        }, 2800);
+      };
+
+      const getAuthRole = () => {
+        const role = window.sessionStorage.getItem(AUTH_ROLE_KEY);
+        return role === 'admin' || role === 'user' ? role : '';
+      };
+
+      const isAdminAuthenticated = () => {
+        return getAuthRole() === 'admin';
+      };
+
+      const updateAdminAuthUI = () => {
+        const role = getAuthRole();
+        const isAdmin = role === 'admin';
+        const isUser = role === 'user';
+        const isLogged = isAdmin || isUser;
+
+        adminAuthSection?.classList.toggle('is-hidden', isLogged);
+        adminControlsSection?.classList.toggle('is-hidden', !isAdmin);
+        adminUserViewSection?.classList.toggle('is-hidden', !isUser);
+        adminLogoutButtons.forEach((button) => {
+          button.classList.toggle('is-hidden', !isLogged);
+        });
+
+        if (adminSessionInfo) {
+          if (isAdmin) {
+            adminSessionInfo.textContent = 'Perfil ativo: ADMINISTRADOR';
+          } else if (isUser) {
+            adminSessionInfo.textContent = `Perfil ativo: ${COMMON_USER_CREDENTIALS.displayName}`;
+          } else {
+            adminSessionInfo.textContent = '';
+          }
+        }
+      };
+
+      const renderCart = () => {
+        if (!cartItemsContainer || !cartEmptyMessage || !cartTotalElement) {
+          return;
+        }
+
+        cartItemsContainer.innerHTML = '';
+        let total = 0;
+
+        cartItems.forEach((item) => {
+          const lineTotal = item.price * item.quantity;
+          total += lineTotal;
+
+          const listItem = document.createElement('li');
+          listItem.className = 'cart-item';
+
+          const mainInfo = document.createElement('div');
+          mainInfo.className = 'cart-item-main';
+
+          const name = document.createElement('strong');
+          name.textContent = item.name;
+          const quantity = document.createElement('span');
+          quantity.textContent = `${item.quantity}x ${item.priceText}`;
+
+          mainInfo.appendChild(name);
+          mainInfo.appendChild(quantity);
+
+          const lineTotalElement = document.createElement('strong');
+          lineTotalElement.className = 'cart-item-total';
+          lineTotalElement.textContent = formatCurrency(lineTotal);
+
+          listItem.appendChild(mainInfo);
+          listItem.appendChild(lineTotalElement);
+          cartItemsContainer.appendChild(listItem);
+        });
+
+        const hasItems = cartItems.size > 0;
+        cartEmptyMessage.classList.toggle('is-hidden', hasItems);
+        cartItemsContainer.classList.toggle('is-hidden', !hasItems);
+        cartTotalElement.textContent = formatCurrency(total);
+      };
+
+      const addToCart = (button) => {
+        const wineName = button.getAttribute('data-wine') || 'Vinho selecionado';
+        const priceText = button.closest('.wine-footer')?.querySelector('strong')?.textContent?.trim() || 'R$ 0,00';
+        const price = parseCurrency(priceText);
+        const existingItem = cartItems.get(wineName);
+
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          cartItems.set(wineName, {
+            name: wineName,
+            priceText,
+            price,
+            quantity: 1,
+          });
+        }
+
+        cartCount += 1;
+        applyCartCount();
+        renderCart();
+        showTemporaryCartFeedback(`${wineName} adicionado ao carrinho.`);
+      };
+
+      const saveAdminWines = () => {
+        window.localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(adminWines));
+      };
+
+      const renderAdminAddedList = () => {
+        if (!adminAddedList) {
+          return;
+        }
+
+        adminAddedList.innerHTML = '';
+
+        if (adminWines.length === 0) {
+          const emptyItem = document.createElement('li');
+          emptyItem.className = 'admin-empty';
+          emptyItem.textContent = 'Nenhum vinho cadastrado pelo ADM.';
+          adminAddedList.appendChild(emptyItem);
+          return;
+        }
+
+        adminWines.forEach((wine) => {
+          const listItem = document.createElement('li');
+          listItem.className = 'admin-added-item';
+
+          const title = document.createElement('strong');
+          title.textContent = wine.name;
+
+          const meta = document.createElement('span');
+          const availability = wine.available ? 'Disponivel' : 'Indisponivel';
+          meta.textContent = `${wine.country} | ${wineTypeLabels[wine.type]} | ${formatCurrency(wine.price)} | ${availability}`;
+
+          listItem.appendChild(title);
+          listItem.appendChild(meta);
+          adminAddedList.appendChild(listItem);
+        });
+      };
+
+      const createWineCardElement = (wine) => {
+        const card = document.createElement('article');
+        card.className = 'wine-card';
+        if (!wine.available) {
+          card.setAttribute('data-available', 'false');
+        }
+
+        const image = document.createElement('img');
+        image.src = wine.imageUrl;
+        image.alt = wine.name;
+
+        const body = document.createElement('div');
+        body.className = 'wine-body';
+
+        const title = document.createElement('h3');
+        title.textContent = wine.name;
+
+        const origin = document.createElement('p');
+        origin.className = 'wine-origin';
+        origin.textContent = `${wine.country} | ${wineTypeLabels[wine.type]}`;
+
+        const description = document.createElement('p');
+        description.className = 'wine-description';
+        description.textContent = wine.description;
+
+        const footer = document.createElement('div');
+        footer.className = 'wine-footer';
+
+        const price = document.createElement('strong');
+        price.textContent = formatCurrency(wine.price);
+
+        const addButton = document.createElement('button');
+        addButton.type = 'button';
+        addButton.setAttribute('data-add-cart', '');
+        addButton.setAttribute('data-wine', wine.name);
+        addButton.textContent = wine.available ? 'Adicionar ao carrinho' : 'Indisponivel';
+        addButton.disabled = !wine.available;
+
+        footer.appendChild(price);
+        footer.appendChild(addButton);
+
+        body.appendChild(title);
+        body.appendChild(origin);
+        body.appendChild(description);
+        body.appendChild(footer);
+
+        card.appendChild(image);
+        card.appendChild(body);
+
+        return card;
+      };
+
+      const addWineToCatalog = (wine, options = {}) => {
+        const { persist = true } = options;
+        const sectionId = wineTypeSectionIds[wine.type];
+        const section = sectionId ? document.getElementById(sectionId) : null;
+        const track = section?.querySelector('.carousel-track');
+        const carousel = section?.querySelector('[data-carousel]');
+
+        if (!track || !carousel) {
+          return false;
+        }
+
+        const card = createWineCardElement(wine);
+        track.appendChild(card);
+
+        const instance = carouselState.get(carousel);
+        instance?.refresh();
+
+        if (persist) {
+          adminWines.push(wine);
+          saveAdminWines();
+          renderAdminAddedList();
+        }
+
+        applyWineStats();
+        return true;
+      };
+
+      const loadStoredAdminWines = () => {
+        const raw = window.localStorage.getItem(ADMIN_STORAGE_KEY);
+        if (!raw) {
+          return;
+        }
+
+        let parsed;
+        try {
+          parsed = JSON.parse(raw);
+        } catch {
+          return;
+        }
+
+        if (!Array.isArray(parsed)) {
+          return;
+        }
+
+        parsed.forEach((wine) => {
+          if (!wine || typeof wine !== 'object') {
+            return;
+          }
+
+          const normalizedType = typeof wine.type === 'string' ? wine.type.toLowerCase() : '';
+          if (!wineTypeSectionIds[normalizedType]) {
+            return;
+          }
+
+          const normalizedPrice = Number(wine.price);
+          if (!Number.isFinite(normalizedPrice) || normalizedPrice < 0) {
+            return;
+          }
+
+          const normalizedWine = {
+            id: typeof wine.id === 'string' ? wine.id : String(Date.now()),
+            name: String(wine.name || '').trim(),
+            type: normalizedType,
+            country: String(wine.country || '').trim(),
+            price: normalizedPrice,
+            description: String(wine.description || '').trim(),
+            imageUrl: String(wine.imageUrl || '').trim(),
+            available: wine.available !== false,
+          };
+
+          if (!normalizedWine.name || !normalizedWine.country || !normalizedWine.description || !normalizedWine.imageUrl) {
+            return;
+          }
+
+          if (addWineToCatalog(normalizedWine, { persist: false })) {
+            adminWines.push(normalizedWine);
+          }
+        });
+
+        renderAdminAddedList();
+      };
+
+      const uploadImageToBlob = async (file) => {
+        const response = await fetch(`/api/upload?filename=${encodeURIComponent(file.name)}`, {
+          method: 'POST',
+          body: file,
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data?.url) {
+          throw new Error(data?.message || data?.error || 'Falha no upload da imagem.');
+        }
+
+        return data.url;
+      };
+
+      const resolveWineImageUrl = async (formData, fallbackSeed) => {
+        const inputUrl = String(formData.get('imageUrl') || '').trim();
+        const imageFile = formData.get('imageFile');
+
+        if (imageFile instanceof File && imageFile.size > 0) {
+          try {
+            return await uploadImageToBlob(imageFile);
+          } catch (error) {
+            if (inputUrl) {
+              return inputUrl;
+            }
+
+            throw error;
+          }
+        }
+
+        if (inputUrl) {
+          return inputUrl;
+        }
+
+        return `https://picsum.photos/seed/${encodeURIComponent(fallbackSeed)}/520/700`;
+      };
+
+      const handleAdminWineSubmit = async (event) => {
+        event.preventDefault();
+
+        if (!isAdminAuthenticated()) {
+          showAdminFeedback('Voce precisa entrar como ADM para cadastrar vinhos.', true);
+          return;
+        }
+
+        if (!adminWineForm) {
+          return;
+        }
+
+        const formData = new FormData(adminWineForm);
+        const name = String(formData.get('name') || '').trim();
+        const type = String(formData.get('type') || '').trim().toLowerCase();
+        const country = String(formData.get('country') || '').trim();
+        const description = String(formData.get('description') || '').trim();
+        const available = String(formData.get('available') || 'true') !== 'false';
+        const price = Number.parseFloat(String(formData.get('price') || '').replace(',', '.'));
+
+        if (!name || !type || !country || !description || !Number.isFinite(price) || price < 0) {
+          showAdminFeedback('Preencha corretamente nome, tipo, pais, preco e descricao.', true);
+          return;
+        }
+
+        if (!wineTypeSectionIds[type]) {
+          showAdminFeedback('Tipo de vinho invalido.', true);
+          return;
+        }
+
+        try {
+          const imageUrl = await resolveWineImageUrl(formData, `${type}-${name.toLowerCase().replace(/\s+/g, '-')}`);
+
+          const newWine = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            name,
+            type,
+            country,
+            price,
+            description,
+            imageUrl,
+            available,
+          };
+
+          const added = addWineToCatalog(newWine, { persist: true });
+          if (!added) {
+            showAdminFeedback('Nao foi possivel adicionar na categoria selecionada.', true);
+            return;
+          }
+
+          adminWineForm.reset();
+          showAdminFeedback(`${name} cadastrado com sucesso no catalogo.`);
+        } catch (error) {
+          showAdminFeedback(error instanceof Error ? error.message : 'Erro ao cadastrar vinho.', true);
+        }
+      };
 
       const setupCarousel = (carousel) => {
         const viewport = carousel.querySelector('[data-carousel-viewport]');
@@ -473,7 +1080,7 @@
         const dotsContainer = carousel.parentElement.querySelector('[data-carousel-dots]');
 
         if (!viewport || !prevButton || !nextButton || !dotsContainer) {
-          return;
+          return null;
         }
 
         let pageCount = 1;
@@ -559,13 +1166,102 @@
         });
 
         refresh();
+
+        return { refresh };
       };
 
       carousels.forEach((carousel) => {
-        setupCarousel(carousel);
+        const instance = setupCarousel(carousel);
+        if (instance) {
+          carouselState.set(carousel, instance);
+        }
       });
 
+      loadStoredAdminWines();
+
+      document.addEventListener('click', (event) => {
+        const addButton = event.target.closest('[data-add-cart]');
+        if (addButton && !addButton.disabled) {
+          addToCart(addButton);
+        }
+      });
+
+      cartToggleButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const isCurrentlyOpen = cartPanel?.classList.contains('is-open');
+          setCartOpen(!isCurrentlyOpen);
+        });
+      });
+
+      cartCloseButton?.addEventListener('click', () => {
+        setCartOpen(false);
+      });
+
+      cartOverlay?.addEventListener('click', () => {
+        setCartOpen(false);
+      });
+
+      adminToggleButton?.addEventListener('click', () => {
+        const isCurrentlyOpen = adminPanel?.classList.contains('is-open');
+        setAdminOpen(!isCurrentlyOpen);
+      });
+
+      adminCloseButton?.addEventListener('click', () => {
+        setAdminOpen(false);
+      });
+
+      adminOverlay?.addEventListener('click', () => {
+        setAdminOpen(false);
+      });
+
+      adminLoginForm?.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const formData = new FormData(adminLoginForm);
+        const username = String(formData.get('username') || '').trim().toLowerCase();
+        const password = String(formData.get('password') || '').trim();
+
+        if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+          window.sessionStorage.setItem(AUTH_ROLE_KEY, 'admin');
+          updateAdminAuthUI();
+          adminLoginForm.reset();
+          showAdminFeedback('Login de administrador realizado.');
+          return;
+        }
+
+        if (username === COMMON_USER_CREDENTIALS.username.toLowerCase() && password === COMMON_USER_CREDENTIALS.password) {
+          window.sessionStorage.setItem(AUTH_ROLE_KEY, 'user');
+          updateAdminAuthUI();
+          adminLoginForm.reset();
+          showAdminFeedback(`Login de usuario comum realizado: ${COMMON_USER_CREDENTIALS.displayName}.`);
+          return;
+        }
+
+        showAdminFeedback('Usuario ou senha invalidos.', true);
+      });
+
+      adminWineForm?.addEventListener('submit', handleAdminWineSubmit);
+
+      adminLogoutButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          window.sessionStorage.removeItem(AUTH_ROLE_KEY);
+          updateAdminAuthUI();
+          showAdminFeedback('Sessao encerrada.');
+        });
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          setCartOpen(false);
+          setAdminOpen(false);
+        }
+      });
+
+      updateAdminAuthUI();
+      applyWineStats();
       applyCartCount();
+      renderCart();
+      renderAdminAddedList();
     </script>
   </body>
 </html>
+
