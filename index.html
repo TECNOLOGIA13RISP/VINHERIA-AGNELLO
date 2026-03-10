@@ -37,7 +37,7 @@
           aria-expanded="false"
           aria-label="Entrar como usuario ou administrador"
         >
-          Entrar usuario/adm
+          Entrar
         </button>
         <button class="cart-toggle" type="button" data-cart-toggle aria-controls="cart-panel" aria-expanded="false">
           Carrinho
@@ -532,9 +532,9 @@
         </article>
 
         <article class="admin-card">
-          <h3>Vinhos adicionados</h3>
-          <p class="admin-help">Itens cadastrados pelo administrador nesta loja.</p>
-          <ul class="admin-added-list" data-admin-added-list></ul>
+          <h3>Editar vinhos cadastrados</h3>
+          <p class="admin-help">Altere vinhos existentes e organize o catalogo como no painel de gestao.</p>
+          <div class="admin-editor-grid" data-admin-editor-grid></div>
         </article>
       </section>
 
@@ -566,6 +566,7 @@
       const adminPanel = document.querySelector('[data-admin-panel]');
       const adminOverlay = document.querySelector('[data-admin-overlay]');
       const adminCloseButton = document.querySelector('[data-admin-close]');
+      const adminPanelTitle = adminPanel?.querySelector('.admin-panel-header h2');
       const adminSessionInfo = document.querySelector('[data-admin-session]');
       const adminAuthSection = document.querySelector('[data-admin-auth]');
       const adminControlsSection = document.querySelector('[data-admin-controls]');
@@ -574,9 +575,10 @@
       const adminWineForm = document.querySelector('[data-admin-wine-form]');
       const adminLogoutButtons = document.querySelectorAll('[data-admin-logout]');
       const adminFeedback = document.querySelector('[data-admin-feedback]');
-      const adminAddedList = document.querySelector('[data-admin-added-list]');
+      const adminEditorGrid = document.querySelector('[data-admin-editor-grid]');
 
-      const ADMIN_STORAGE_KEY = 'vinheria_admin_wines_v1';
+      const CATALOG_STORAGE_KEY = 'vinheria_catalog_v2';
+      const LEGACY_ADMIN_STORAGE_KEY = 'vinheria_admin_wines_v1';
       const AUTH_ROLE_KEY = 'vinheria_auth_role_v1';
       const ADMIN_CREDENTIALS = {
         username: 'admin',
@@ -604,7 +606,7 @@
 
       const cartItems = new Map();
       const carouselState = new WeakMap();
-      const adminWines = [];
+      const catalogWines = [];
       let cartCount = 0;
       let cartFeedbackTimer;
       let adminFeedbackTimer;
@@ -651,6 +653,92 @@
           style: 'currency',
           currency: 'BRL',
         }).format(value);
+      };
+
+      const slugify = (value) => {
+        return String(value || '')
+          .normalize('NFD')
+          .toLowerCase()
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      };
+
+      const createWineId = (seed = '') => {
+        const safeSeed = slugify(seed);
+        const random = Math.random().toString(36).slice(2, 8);
+        return safeSeed ? `${safeSeed}-${random}` : `${Date.now()}-${random}`;
+      };
+
+      const getTrackByType = (type) => {
+        const sectionId = wineTypeSectionIds[type];
+        const section = sectionId ? document.getElementById(sectionId) : null;
+        return section?.querySelector('.carousel-track') || null;
+      };
+
+      const buildFallbackWineImage = (wine) => {
+        const seed = `${wine.type || 'vinho'}-${slugify(wine.name || 'catalogo')}`;
+        return `https://picsum.photos/seed/${encodeURIComponent(seed)}/520/700`;
+      };
+
+      const normalizeWine = (wine, options = {}) => {
+        const { fallbackType = 'brancos', fallbackName = 'Vinho', fallbackCountry = 'Origem nao informada' } = options;
+
+        if (!wine || typeof wine !== 'object') {
+          return null;
+        }
+
+        const normalizedType = typeof wine.type === 'string' ? wine.type.toLowerCase().trim() : fallbackType;
+        if (!wineTypeSectionIds[normalizedType]) {
+          return null;
+        }
+
+        const name = String(wine.name || fallbackName).trim();
+        const country = String(wine.country || fallbackCountry).trim();
+        const description = String(wine.description || '').trim() || 'Sem descricao cadastrada.';
+
+        const rawPrice = (() => {
+          if (typeof wine.price === 'number') {
+            return wine.price;
+          }
+
+          const textPrice = String(wine.price || '')
+            .trim()
+            .replace(/[^\d.,-]/g, '');
+
+          if (!textPrice) {
+            return Number.NaN;
+          }
+
+          if (textPrice.includes(',') && textPrice.includes('.')) {
+            return Number.parseFloat(textPrice.replace(/\./g, '').replace(',', '.'));
+          }
+
+          if (textPrice.includes(',')) {
+            return Number.parseFloat(textPrice.replace(',', '.'));
+          }
+
+          return Number.parseFloat(textPrice);
+        })();
+
+        const price = Number(rawPrice);
+        if (!Number.isFinite(price) || price < 0) {
+          return null;
+        }
+
+        const id = String(wine.id || '').trim() || createWineId(`${normalizedType}-${name}`);
+        const imageUrl = String(wine.imageUrl || '').trim();
+
+        return {
+          id,
+          name,
+          type: normalizedType,
+          country,
+          price,
+          description,
+          imageUrl: imageUrl || buildFallbackWineImage({ type: normalizedType, name }),
+          available: wine.available !== false,
+        };
       };
 
       function setAdminOpen(isOpen, options = {}) {
@@ -755,6 +843,15 @@
             adminSessionInfo.textContent = '';
           }
         }
+
+        if (adminPanelTitle) {
+          adminPanelTitle.textContent = isAdmin ? 'Painel ADM' : 'Entrar';
+        }
+
+        adminPanel?.classList.toggle('is-admin-view', isAdmin);
+        if (isAdmin) {
+          renderAdminEditor();
+        }
       };
 
       const renderCart = () => {
@@ -791,7 +888,7 @@
           decreaseButton.type = 'button';
           decreaseButton.className = 'cart-qty-button';
           decreaseButton.setAttribute('data-cart-action', 'decrease');
-          decreaseButton.setAttribute('data-cart-item', item.name);
+          decreaseButton.setAttribute('data-cart-item', item.id);
           decreaseButton.setAttribute('aria-label', `Diminuir quantidade de ${item.name}`);
           decreaseButton.textContent = '-';
 
@@ -803,7 +900,7 @@
           increaseButton.type = 'button';
           increaseButton.className = 'cart-qty-button';
           increaseButton.setAttribute('data-cart-action', 'increase');
-          increaseButton.setAttribute('data-cart-item', item.name);
+          increaseButton.setAttribute('data-cart-item', item.id);
           increaseButton.setAttribute('aria-label', `Aumentar quantidade de ${item.name}`);
           increaseButton.textContent = '+';
 
@@ -815,7 +912,7 @@
           removeButton.type = 'button';
           removeButton.className = 'cart-item-remove';
           removeButton.setAttribute('data-cart-action', 'remove');
-          removeButton.setAttribute('data-cart-item', item.name);
+          removeButton.setAttribute('data-cart-item', item.id);
           removeButton.setAttribute('aria-label', `Excluir ${item.name} do carrinho`);
           removeButton.textContent = 'Excluir';
 
@@ -842,17 +939,17 @@
         applyCartCount();
       };
 
-      const updateCartItemQuantity = (wineName, delta) => {
-        const item = cartItems.get(wineName);
+      const updateCartItemQuantity = (itemId, delta) => {
+        const item = cartItems.get(itemId);
         if (!item) {
           return;
         }
 
         const nextQuantity = item.quantity + delta;
         if (nextQuantity <= 0) {
-          cartItems.delete(wineName);
+          cartItems.delete(itemId);
           renderCart();
-          showTemporaryCartFeedback(`${wineName} removido do carrinho.`);
+          showTemporaryCartFeedback(`${item.name} removido do carrinho.`);
           return;
         }
 
@@ -860,26 +957,42 @@
         renderCart();
       };
 
-      const removeCartItem = (wineName) => {
-        if (!cartItems.has(wineName)) {
+      const removeCartItem = (itemId) => {
+        const item = cartItems.get(itemId);
+        if (!item) {
           return;
         }
 
-        cartItems.delete(wineName);
+        cartItems.delete(itemId);
         renderCart();
-        showTemporaryCartFeedback(`${wineName} removido do carrinho.`);
+        showTemporaryCartFeedback(`${item.name} removido do carrinho.`);
+      };
+
+      const findCatalogWineById = (wineId) => {
+        return catalogWines.find((wine) => wine.id === wineId) || null;
       };
 
       const addToCart = (button) => {
-        const wineName = button.getAttribute('data-wine') || 'Vinho selecionado';
-        const priceText = button.closest('.wine-footer')?.querySelector('strong')?.textContent?.trim() || 'R$ 0,00';
-        const price = parseCurrency(priceText);
-        const existingItem = cartItems.get(wineName);
+        const wineId = button.getAttribute('data-wine-id') || '';
+        const catalogWine = wineId ? findCatalogWineById(wineId) : null;
+        const fallbackName = button.getAttribute('data-wine') || 'Vinho selecionado';
+        const fallbackPriceText = button.closest('.wine-footer')?.querySelector('strong')?.textContent?.trim() || 'R$ 0,00';
+
+        const itemId = catalogWine?.id || fallbackName;
+        const wineName = catalogWine?.name || fallbackName;
+        const price = catalogWine?.price ?? parseCurrency(fallbackPriceText);
+        const priceText = formatCurrency(price);
+        const existingItem = cartItems.get(itemId);
 
         if (existingItem) {
           existingItem.quantity += 1;
+          existingItem.name = wineName;
+          existingItem.price = price;
+          existingItem.priceText = priceText;
         } else {
-          cartItems.set(wineName, {
+          cartItems.set(itemId, {
+            id: itemId,
+            wineId: catalogWine?.id || '',
             name: wineName,
             priceText,
             price,
@@ -891,47 +1004,143 @@
         showTemporaryCartFeedback(`${wineName} adicionado ao carrinho.`);
       };
 
-      const saveAdminWines = () => {
-        window.localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(adminWines));
+      const persistCatalogWines = () => {
+        window.localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(catalogWines));
       };
 
-      const renderAdminAddedList = () => {
-        if (!adminAddedList) {
-          return;
-        }
+      const collectInitialCatalogWines = () => {
+        const collected = [];
 
-        adminAddedList.innerHTML = '';
+        Object.entries(wineTypeSectionIds).forEach(([type, sectionId]) => {
+          const section = document.getElementById(sectionId);
+          const cards = section?.querySelectorAll('.carousel-track .wine-card') || [];
 
-        if (adminWines.length === 0) {
-          const emptyItem = document.createElement('li');
-          emptyItem.className = 'admin-empty';
-          emptyItem.textContent = 'Nenhum vinho cadastrado pelo ADM.';
-          adminAddedList.appendChild(emptyItem);
-          return;
-        }
+          cards.forEach((card, index) => {
+            const name = card.querySelector('.wine-body h3')?.textContent?.trim() || `Vinho ${index + 1}`;
+            const originText = card.querySelector('.wine-origin')?.textContent?.trim() || '';
+            const country = originText.split('|')[0]?.trim() || 'Origem nao informada';
+            const description = card.querySelector('.wine-description')?.textContent?.trim() || 'Sem descricao cadastrada.';
+            const priceText = card.querySelector('.wine-footer strong')?.textContent?.trim() || 'R$ 0,00';
+            const imageUrl = card.querySelector('img')?.getAttribute('src') || '';
+            const available = card.getAttribute('data-available') !== 'false';
+            const fallbackId = `${type}-${index + 1}-${slugify(name)}`;
 
-        adminWines.forEach((wine) => {
-          const listItem = document.createElement('li');
-          listItem.className = 'admin-added-item';
+            const normalized = normalizeWine(
+              {
+                id: card.getAttribute('data-wine-id') || fallbackId,
+                name,
+                type,
+                country,
+                description,
+                price: parseCurrency(priceText),
+                imageUrl,
+                available,
+              },
+              {
+                fallbackType: type,
+                fallbackName: name,
+                fallbackCountry: country,
+              },
+            );
 
-          const title = document.createElement('strong');
-          title.textContent = wine.name;
-
-          const meta = document.createElement('span');
-          const availability = wine.available ? 'Disponivel' : 'Indisponivel';
-          meta.textContent = `${wine.country} | ${wineTypeLabels[wine.type]} | ${formatCurrency(wine.price)} | ${availability}`;
-
-          listItem.appendChild(title);
-          listItem.appendChild(meta);
-          adminAddedList.appendChild(listItem);
+            if (normalized) {
+              collected.push(normalized);
+            }
+          });
         });
+
+        return collected;
+      };
+
+      const readStoredCatalogWines = () => {
+        const raw = window.localStorage.getItem(CATALOG_STORAGE_KEY);
+        if (!raw) {
+          return [];
+        }
+
+        let parsed;
+        try {
+          parsed = JSON.parse(raw);
+        } catch {
+          return [];
+        }
+
+        if (!Array.isArray(parsed)) {
+          return [];
+        }
+
+        return parsed
+          .map((wine) => normalizeWine(wine))
+          .filter(Boolean);
+      };
+
+      const readLegacyAdminWines = () => {
+        const raw = window.localStorage.getItem(LEGACY_ADMIN_STORAGE_KEY);
+        if (!raw) {
+          return [];
+        }
+
+        let parsed;
+        try {
+          parsed = JSON.parse(raw);
+        } catch {
+          return [];
+        }
+
+        if (!Array.isArray(parsed)) {
+          return [];
+        }
+
+        return parsed
+          .map((wine) => normalizeWine(wine))
+          .filter(Boolean);
+      };
+
+      const renderCatalog = () => {
+        Object.keys(wineTypeSectionIds).forEach((type) => {
+          const track = getTrackByType(type);
+          if (track) {
+            track.innerHTML = '';
+          }
+        });
+
+        catalogWines.forEach((wine) => {
+          const track = getTrackByType(wine.type);
+          if (track) {
+            track.appendChild(createWineCardElement(wine));
+          }
+        });
+
+        carousels.forEach((carousel) => {
+          const instance = carouselState.get(carousel);
+          instance?.refresh();
+        });
+
+        applyWineStats();
+      };
+
+      const loadCatalogWines = () => {
+        const fromStorage = readStoredCatalogWines();
+        if (fromStorage.length > 0) {
+          catalogWines.splice(0, catalogWines.length, ...fromStorage);
+          persistCatalogWines();
+          return;
+        }
+
+        const initialCatalog = collectInitialCatalogWines();
+        const legacyAdminWines = readLegacyAdminWines();
+        catalogWines.splice(0, catalogWines.length, ...initialCatalog, ...legacyAdminWines);
+        persistCatalogWines();
       };
 
       const createWineCardElement = (wine) => {
         const card = document.createElement('article');
         card.className = 'wine-card';
+        card.setAttribute('data-wine-id', wine.id);
         if (!wine.available) {
           card.setAttribute('data-available', 'false');
+        } else {
+          card.removeAttribute('data-available');
         }
 
         const image = document.createElement('img');
@@ -961,6 +1170,7 @@
         const addButton = document.createElement('button');
         addButton.type = 'button';
         addButton.setAttribute('data-add-cart', '');
+        addButton.setAttribute('data-wine-id', wine.id);
         addButton.setAttribute('data-wine', wine.name);
         addButton.textContent = wine.available ? 'Adicionar ao carrinho' : 'Indisponivel';
         addButton.disabled = !wine.available;
@@ -979,86 +1189,201 @@
         return card;
       };
 
-      const addWineToCatalog = (wine, options = {}) => {
-        const { persist = true } = options;
-        const sectionId = wineTypeSectionIds[wine.type];
-        const section = sectionId ? document.getElementById(sectionId) : null;
-        const track = section?.querySelector('.carousel-track');
-        const carousel = section?.querySelector('[data-carousel]');
+      const syncCartFromCatalogWine = (wine) => {
+        const item = cartItems.get(wine.id);
+        if (!item) {
+          return;
+        }
 
-        if (!track || !carousel) {
+        if (!wine.available) {
+          cartItems.delete(wine.id);
+          renderCart();
+          return;
+        }
+
+        item.name = wine.name;
+        item.price = wine.price;
+        item.priceText = formatCurrency(wine.price);
+        renderCart();
+      };
+
+      const addWineToCatalog = (wine) => {
+        const normalizedWine = normalizeWine(wine);
+        if (!normalizedWine) {
           return false;
         }
 
-        const card = createWineCardElement(wine);
-        track.appendChild(card);
-
-        const instance = carouselState.get(carousel);
-        instance?.refresh();
-
-        if (persist) {
-          adminWines.push(wine);
-          saveAdminWines();
-          renderAdminAddedList();
-        }
-
-        applyWineStats();
+        catalogWines.push(normalizedWine);
+        persistCatalogWines();
+        renderCatalog();
+        renderAdminEditor();
         return true;
       };
 
-      const loadStoredAdminWines = () => {
-        const raw = window.localStorage.getItem(ADMIN_STORAGE_KEY);
-        if (!raw) {
-          return;
+      const updateWineInCatalog = (wineId, updatedWine) => {
+        const index = catalogWines.findIndex((wine) => wine.id === wineId);
+        if (index < 0) {
+          return false;
         }
 
-        let parsed;
-        try {
-          parsed = JSON.parse(raw);
-        } catch {
-          return;
+        const normalizedWine = normalizeWine({
+          ...updatedWine,
+          id: wineId,
+        });
+        if (!normalizedWine) {
+          return false;
         }
 
-        if (!Array.isArray(parsed)) {
-          return;
+        catalogWines[index] = normalizedWine;
+        persistCatalogWines();
+        syncCartFromCatalogWine(normalizedWine);
+        renderCatalog();
+        renderAdminEditor();
+        return true;
+      };
+
+      const removeWineFromCatalog = (wineId) => {
+        const index = catalogWines.findIndex((wine) => wine.id === wineId);
+        if (index < 0) {
+          return null;
         }
 
-        parsed.forEach((wine) => {
-          if (!wine || typeof wine !== 'object') {
-            return;
+        const [removedWine] = catalogWines.splice(index, 1);
+        persistCatalogWines();
+        cartItems.delete(wineId);
+        renderCart();
+        renderCatalog();
+        renderAdminEditor();
+        return removedWine;
+      };
+
+      const createAdminWineEditorCard = (wine) => {
+        const card = document.createElement('article');
+        card.className = 'admin-editor-card';
+        card.setAttribute('data-admin-wine-id', wine.id);
+
+        const image = document.createElement('img');
+        image.className = 'admin-editor-image';
+        image.src = wine.imageUrl;
+        image.alt = wine.name;
+
+        const title = document.createElement('h4');
+        title.className = 'admin-editor-title';
+        title.textContent = wine.name;
+
+        const formGrid = document.createElement('div');
+        formGrid.className = 'admin-editor-form-grid';
+
+        const createField = (labelText, fieldName, fieldType, fieldValue) => {
+          const wrapper = document.createElement('label');
+          wrapper.className = 'admin-editor-field';
+
+          const label = document.createElement('span');
+          label.textContent = labelText;
+
+          let control;
+          if (fieldType === 'textarea') {
+            control = document.createElement('textarea');
+            control.rows = 4;
+          } else if (fieldType === 'select') {
+            control = document.createElement('select');
+          } else {
+            control = document.createElement('input');
+            control.type = fieldType;
           }
 
-          const normalizedType = typeof wine.type === 'string' ? wine.type.toLowerCase() : '';
-          if (!wineTypeSectionIds[normalizedType]) {
-            return;
+          control.setAttribute('data-field', fieldName);
+          if (fieldType !== 'select') {
+            control.value = fieldValue;
           }
 
-          const normalizedPrice = Number(wine.price);
-          if (!Number.isFinite(normalizedPrice) || normalizedPrice < 0) {
-            return;
-          }
+          wrapper.appendChild(label);
+          wrapper.appendChild(control);
+          return { wrapper, control };
+        };
 
-          const normalizedWine = {
-            id: typeof wine.id === 'string' ? wine.id : String(Date.now()),
-            name: String(wine.name || '').trim(),
-            type: normalizedType,
-            country: String(wine.country || '').trim(),
-            price: normalizedPrice,
-            description: String(wine.description || '').trim(),
-            imageUrl: String(wine.imageUrl || '').trim(),
-            available: wine.available !== false,
-          };
+        const { wrapper: nameWrapper } = createField('Nome', 'name', 'text', wine.name);
+        const { wrapper: countryWrapper } = createField('Pais de origem', 'country', 'text', wine.country);
+        const { wrapper: priceWrapper, control: priceInput } = createField('Preco (R$)', 'price', 'number', String(wine.price.toFixed(2)));
+        priceInput.min = '0';
+        priceInput.step = '0.01';
 
-          if (!normalizedWine.name || !normalizedWine.country || !normalizedWine.description || !normalizedWine.imageUrl) {
-            return;
-          }
+        const { wrapper: imageWrapper } = createField('Imagem (URL)', 'imageUrl', 'url', wine.imageUrl);
+        const { wrapper: descriptionWrapper } = createField('Descricao', 'description', 'textarea', wine.description);
 
-          if (addWineToCatalog(normalizedWine, { persist: false })) {
-            adminWines.push(normalizedWine);
-          }
+        const { wrapper: typeWrapper, control: typeSelect } = createField('Tipo', 'type', 'select', '');
+        Object.entries(wineTypeLabels).forEach(([type, label]) => {
+          const option = document.createElement('option');
+          option.value = type;
+          option.textContent = label;
+          option.selected = type === wine.type;
+          typeSelect.appendChild(option);
         });
 
-        renderAdminAddedList();
+        const { wrapper: availabilityWrapper, control: availabilitySelect } = createField('Disponibilidade', 'available', 'select', '');
+        [
+          { value: 'true', label: 'Disponivel' },
+          { value: 'false', label: 'Indisponivel' },
+        ].forEach((optionConfig) => {
+          const option = document.createElement('option');
+          option.value = optionConfig.value;
+          option.textContent = optionConfig.label;
+          option.selected = String(wine.available) === optionConfig.value;
+          availabilitySelect.appendChild(option);
+        });
+
+        formGrid.appendChild(nameWrapper);
+        formGrid.appendChild(typeWrapper);
+        formGrid.appendChild(countryWrapper);
+        formGrid.appendChild(priceWrapper);
+        formGrid.appendChild(imageWrapper);
+        formGrid.appendChild(descriptionWrapper);
+        formGrid.appendChild(availabilityWrapper);
+
+        const actions = document.createElement('div');
+        actions.className = 'admin-editor-actions';
+
+        const saveButton = document.createElement('button');
+        saveButton.type = 'button';
+        saveButton.className = 'admin-editor-save';
+        saveButton.setAttribute('data-admin-editor-action', 'save');
+        saveButton.textContent = 'Salvar';
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'admin-editor-delete';
+        deleteButton.setAttribute('data-admin-editor-action', 'delete');
+        deleteButton.textContent = 'Excluir';
+
+        actions.appendChild(saveButton);
+        actions.appendChild(deleteButton);
+
+        card.appendChild(image);
+        card.appendChild(title);
+        card.appendChild(formGrid);
+        card.appendChild(actions);
+
+        return card;
+      };
+
+      const renderAdminEditor = () => {
+        if (!adminEditorGrid) {
+          return;
+        }
+
+        adminEditorGrid.innerHTML = '';
+
+        if (catalogWines.length === 0) {
+          const empty = document.createElement('p');
+          empty.className = 'admin-empty';
+          empty.textContent = 'Nenhum vinho cadastrado no catalogo.';
+          adminEditorGrid.appendChild(empty);
+          return;
+        }
+
+        catalogWines.forEach((wine) => {
+          adminEditorGrid.appendChild(createAdminWineEditorCard(wine));
+        });
       };
 
       const uploadImageToBlob = async (file) => {
@@ -1132,7 +1457,7 @@
           const imageUrl = await resolveWineImageUrl(formData, `${type}-${name.toLowerCase().replace(/\s+/g, '-')}`);
 
           const newWine = {
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            id: createWineId(`${type}-${name}`),
             name,
             type,
             country,
@@ -1142,7 +1467,7 @@
             available,
           };
 
-          const added = addWineToCatalog(newWine, { persist: true });
+          const added = addWineToCatalog(newWine);
           if (!added) {
             showAdminFeedback('Nao foi possivel adicionar na categoria selecionada.', true);
             return;
@@ -1259,7 +1584,9 @@
         }
       });
 
-      loadStoredAdminWines();
+      loadCatalogWines();
+      renderCatalog();
+      renderAdminEditor();
 
       document.addEventListener('click', (event) => {
         const addButton = event.target.closest('[data-add-cart]');
@@ -1290,23 +1617,108 @@
         }
 
         const action = actionButton.getAttribute('data-cart-action');
-        const wineName = actionButton.getAttribute('data-cart-item');
-        if (!action || !wineName) {
+        const cartItemId = actionButton.getAttribute('data-cart-item');
+        if (!action || !cartItemId) {
           return;
         }
 
         if (action === 'increase') {
-          updateCartItemQuantity(wineName, 1);
+          updateCartItemQuantity(cartItemId, 1);
           return;
         }
 
         if (action === 'decrease') {
-          updateCartItemQuantity(wineName, -1);
+          updateCartItemQuantity(cartItemId, -1);
           return;
         }
 
         if (action === 'remove') {
-          removeCartItem(wineName);
+          removeCartItem(cartItemId);
+        }
+      });
+
+      adminEditorGrid?.addEventListener('input', (event) => {
+        const imageInput = event.target.closest('[data-field="imageUrl"]');
+        if (!imageInput) {
+          return;
+        }
+
+        const card = imageInput.closest('.admin-editor-card');
+        const preview = card?.querySelector('.admin-editor-image');
+        if (!card || !preview) {
+          return;
+        }
+
+        const nextUrl = String(imageInput.value || '').trim();
+        const wineId = card.getAttribute('data-admin-wine-id') || '';
+        const currentWine = findCatalogWineById(wineId);
+        preview.src = nextUrl || buildFallbackWineImage(currentWine || {});
+      });
+
+      adminEditorGrid?.addEventListener('click', (event) => {
+        const actionButton = event.target.closest('[data-admin-editor-action]');
+        if (!actionButton) {
+          return;
+        }
+
+        if (!isAdminAuthenticated()) {
+          showAdminFeedback('Somente o ADM pode alterar o catalogo.', true);
+          return;
+        }
+
+        const card = actionButton.closest('.admin-editor-card');
+        const wineId = card?.getAttribute('data-admin-wine-id') || '';
+        if (!card || !wineId) {
+          return;
+        }
+
+        const action = actionButton.getAttribute('data-admin-editor-action');
+        if (action === 'delete') {
+          const removed = removeWineFromCatalog(wineId);
+          if (removed) {
+            showAdminFeedback(`${removed.name} removido do catalogo.`);
+          }
+          return;
+        }
+
+        if (action === 'save') {
+          const nameInput = card.querySelector('[data-field="name"]');
+          const typeInput = card.querySelector('[data-field="type"]');
+          const countryInput = card.querySelector('[data-field="country"]');
+          const priceInput = card.querySelector('[data-field="price"]');
+          const imageInput = card.querySelector('[data-field="imageUrl"]');
+          const descriptionInput = card.querySelector('[data-field="description"]');
+          const availabilityInput = card.querySelector('[data-field="available"]');
+
+          const updated = normalizeWine(
+            {
+              id: wineId,
+              name: nameInput?.value || '',
+              type: typeInput?.value || '',
+              country: countryInput?.value || '',
+              price: String(priceInput?.value || '').replace(',', '.'),
+              imageUrl: imageInput?.value || '',
+              description: descriptionInput?.value || '',
+              available: String(availabilityInput?.value || 'true') !== 'false',
+            },
+            {
+              fallbackName: 'Vinho',
+              fallbackCountry: 'Origem nao informada',
+            },
+          );
+
+          if (!updated) {
+            showAdminFeedback('Preencha corretamente os campos para salvar.', true);
+            return;
+          }
+
+          const saved = updateWineInCatalog(wineId, updated);
+          if (!saved) {
+            showAdminFeedback('Nao foi possivel salvar este vinho.', true);
+            return;
+          }
+
+          showAdminFeedback(`${updated.name} atualizado com sucesso.`);
         }
       });
 
@@ -1332,6 +1744,7 @@
         if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
           window.sessionStorage.setItem(AUTH_ROLE_KEY, 'admin');
           updateAdminAuthUI();
+          setAdminOpen(true);
           adminLoginForm.reset();
           showAdminFeedback('Login de administrador realizado.');
           return;
@@ -1369,7 +1782,6 @@
       applyWineStats();
       applyCartCount();
       renderCart();
-      renderAdminAddedList();
     </script>
   </body>
 </html>
