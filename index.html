@@ -29,8 +29,15 @@
         <a href="#">Rose</a>
         <a href="#">Tintos</a>
         <a href="#">Espumantes</a>
-        <button class="admin-toggle" type="button" data-admin-toggle aria-controls="admin-panel" aria-expanded="false">
-          Acesso ADM
+        <button
+          class="admin-toggle"
+          type="button"
+          data-admin-toggle
+          aria-controls="admin-panel"
+          aria-expanded="false"
+          aria-label="Entrar como usuario ou administrador"
+        >
+          Entrar usuario/adm
         </button>
         <button class="cart-toggle" type="button" data-cart-toggle aria-controls="cart-panel" aria-expanded="false">
           Carrinho
@@ -465,13 +472,13 @@
     <div class="admin-overlay" data-admin-overlay></div>
     <aside class="admin-panel" id="admin-panel" aria-hidden="true" data-admin-panel>
       <header class="admin-panel-header">
-        <h2>Painel ADM</h2>
-        <button class="admin-close" type="button" aria-label="Fechar painel administrador" data-admin-close>&times;</button>
+        <h2>Entrar</h2>
+        <button class="admin-close" type="button" aria-label="Fechar painel de entrada" data-admin-close>&times;</button>
       </header>
       <p class="admin-session" data-admin-session></p>
 
       <section class="admin-auth" data-admin-auth>
-        <h3>Acesso administrativo</h3>
+        <h3>Acesso de usuario e administrador</h3>
         <p>Use `admin/admin` para cadastro ou `GUILHERME GOMES OLIVEIRA/123` para usuario comum.</p>
         <form class="admin-form" data-admin-login-form>
           <label for="admin-user">Usuario</label>
@@ -603,6 +610,11 @@
       let adminFeedbackTimer;
 
       const applyCartCount = () => {
+        cartCount = 0;
+        cartItems.forEach((item) => {
+          cartCount += item.quantity;
+        });
+
         cartCountTargets.forEach((target) => {
           target.textContent = String(cartCount);
         });
@@ -766,10 +778,53 @@
           const name = document.createElement('strong');
           name.textContent = item.name;
           const quantity = document.createElement('span');
+          quantity.className = 'cart-item-meta';
           quantity.textContent = `${item.quantity}x ${item.priceText}`;
+
+          const actions = document.createElement('div');
+          actions.className = 'cart-item-actions';
+
+          const quantityControl = document.createElement('div');
+          quantityControl.className = 'cart-quantity-control';
+
+          const decreaseButton = document.createElement('button');
+          decreaseButton.type = 'button';
+          decreaseButton.className = 'cart-qty-button';
+          decreaseButton.setAttribute('data-cart-action', 'decrease');
+          decreaseButton.setAttribute('data-cart-item', item.name);
+          decreaseButton.setAttribute('aria-label', `Diminuir quantidade de ${item.name}`);
+          decreaseButton.textContent = '-';
+
+          const quantityValue = document.createElement('span');
+          quantityValue.className = 'cart-qty-value';
+          quantityValue.textContent = String(item.quantity);
+
+          const increaseButton = document.createElement('button');
+          increaseButton.type = 'button';
+          increaseButton.className = 'cart-qty-button';
+          increaseButton.setAttribute('data-cart-action', 'increase');
+          increaseButton.setAttribute('data-cart-item', item.name);
+          increaseButton.setAttribute('aria-label', `Aumentar quantidade de ${item.name}`);
+          increaseButton.textContent = '+';
+
+          quantityControl.appendChild(decreaseButton);
+          quantityControl.appendChild(quantityValue);
+          quantityControl.appendChild(increaseButton);
+
+          const removeButton = document.createElement('button');
+          removeButton.type = 'button';
+          removeButton.className = 'cart-item-remove';
+          removeButton.setAttribute('data-cart-action', 'remove');
+          removeButton.setAttribute('data-cart-item', item.name);
+          removeButton.setAttribute('aria-label', `Excluir ${item.name} do carrinho`);
+          removeButton.textContent = 'Excluir';
+
+          actions.appendChild(quantityControl);
+          actions.appendChild(removeButton);
 
           mainInfo.appendChild(name);
           mainInfo.appendChild(quantity);
+          mainInfo.appendChild(actions);
 
           const lineTotalElement = document.createElement('strong');
           lineTotalElement.className = 'cart-item-total';
@@ -784,6 +839,35 @@
         cartEmptyMessage.classList.toggle('is-hidden', hasItems);
         cartItemsContainer.classList.toggle('is-hidden', !hasItems);
         cartTotalElement.textContent = formatCurrency(total);
+        applyCartCount();
+      };
+
+      const updateCartItemQuantity = (wineName, delta) => {
+        const item = cartItems.get(wineName);
+        if (!item) {
+          return;
+        }
+
+        const nextQuantity = item.quantity + delta;
+        if (nextQuantity <= 0) {
+          cartItems.delete(wineName);
+          renderCart();
+          showTemporaryCartFeedback(`${wineName} removido do carrinho.`);
+          return;
+        }
+
+        item.quantity = nextQuantity;
+        renderCart();
+      };
+
+      const removeCartItem = (wineName) => {
+        if (!cartItems.has(wineName)) {
+          return;
+        }
+
+        cartItems.delete(wineName);
+        renderCart();
+        showTemporaryCartFeedback(`${wineName} removido do carrinho.`);
       };
 
       const addToCart = (button) => {
@@ -803,8 +887,6 @@
           });
         }
 
-        cartCount += 1;
-        applyCartCount();
         renderCart();
         showTemporaryCartFeedback(`${wineName} adicionado ao carrinho.`);
       };
@@ -1199,6 +1281,33 @@
 
       cartOverlay?.addEventListener('click', () => {
         setCartOpen(false);
+      });
+
+      cartItemsContainer?.addEventListener('click', (event) => {
+        const actionButton = event.target.closest('[data-cart-action]');
+        if (!actionButton) {
+          return;
+        }
+
+        const action = actionButton.getAttribute('data-cart-action');
+        const wineName = actionButton.getAttribute('data-cart-item');
+        if (!action || !wineName) {
+          return;
+        }
+
+        if (action === 'increase') {
+          updateCartItemQuantity(wineName, 1);
+          return;
+        }
+
+        if (action === 'decrease') {
+          updateCartItemQuantity(wineName, -1);
+          return;
+        }
+
+        if (action === 'remove') {
+          removeCartItem(wineName);
+        }
       });
 
       adminToggleButton?.addEventListener('click', () => {
