@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vinheria Agnello | Upload Blob</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Upload de arquivo para Vercel Blob</h1>
+      <p class="description">
+        Selecione um arquivo e envie. A API /api/upload gravara no Blob Storage
+        e retornara a URL publica.
+      </p>
+
+      <form id="upload-form" class="card">
+        <label for="file-input">Arquivo</label>
+        <input id="file-input" name="file" type="file" required />
+        <button id="submit-button" type="submit">Enviar</button>
+      </form>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <section id="result" class="result hidden">
+        <h2>Upload concluido</h2>
+        <p>
+          URL:
+          <a id="result-link" href="#" target="_blank" rel="noreferrer noopener"></a>
+        </p>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById('upload-form');
+      const fileInput = document.getElementById('file-input');
+      const submitButton = document.getElementById('submit-button');
+      const statusElement = document.getElementById('status');
+      const resultElement = document.getElementById('result');
+      const resultLink = document.getElementById('result-link');
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) {
+          statusElement.textContent = 'Selecione um arquivo antes de enviar.';
+          return;
+        }
+
+        submitButton.disabled = true;
+        resultElement.classList.add('hidden');
+        statusElement.textContent = 'Enviando arquivo...';
+
+        try {
+          const response = await fetch(
+            '/api/upload?filename=' + encodeURIComponent(file.name),
+            {
+              method: 'POST',
+              body: file,
+            }
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || data.error || 'Falha no upload.');
+          }
+
+          statusElement.textContent = 'Upload realizado com sucesso.';
+          resultLink.href = data.url;
+          resultLink.textContent = data.url;
+          resultElement.classList.remove('hidden');
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Erro inesperado.';
+          statusElement.textContent = message;
+        } finally {
+          submitButton.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
