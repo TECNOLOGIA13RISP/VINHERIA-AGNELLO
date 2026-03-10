@@ -776,6 +776,79 @@ body.cart-open {
   gap: 12px;
 }
 
+.user-history-list,
+.user-stock-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.user-history-item,
+.user-stock-item {
+  border-radius: 12px;
+  border: 1px solid var(--stroke-soft);
+  background: rgba(24, 10, 13, 0.7);
+  padding: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.user-stock-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.user-history-main,
+.user-stock-main {
+  display: grid;
+  gap: 3px;
+}
+
+.user-history-main strong,
+.user-stock-main strong {
+  font-size: 0.95rem;
+}
+
+.user-history-main span,
+.user-stock-main span {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+.user-history-item small {
+  color: #cdb18a;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.user-availability-badge {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 800;
+}
+
+.user-availability-badge.is-available {
+  color: #b8f1c7;
+  border: 1px solid rgba(113, 214, 144, 0.45);
+  background: rgba(33, 96, 53, 0.28);
+}
+
+.user-availability-badge.is-unavailable {
+  color: #f3c0be;
+  border: 1px solid rgba(216, 129, 123, 0.45);
+  background: rgba(112, 41, 41, 0.26);
+}
+
 .admin-card {
   border-radius: 14px;
   border: 1px solid var(--stroke-soft);
@@ -945,6 +1018,32 @@ body.cart-open {
   font-size: 0.9rem;
 }
 
+.admin-editor-toolbar {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-editor-toolbar label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.admin-editor-toolbar input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--stroke-soft);
+  background: rgba(25, 10, 13, 0.84);
+  color: var(--text-main);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+}
+
+.admin-editor-toolbar input::placeholder {
+  color: rgba(226, 202, 169, 0.55);
+}
+
 .admin-feedback {
   margin: 0;
   min-height: 22px;
@@ -1056,6 +1155,11 @@ body.cart-open {
 
   .admin-panel.is-admin-view .admin-controls {
     grid-template-columns: 1fr;
+  }
+
+  .user-stock-item {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .wine-footer {
