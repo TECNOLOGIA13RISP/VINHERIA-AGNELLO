@@ -3,81 +3,569 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vinheria Agnello | Upload Blob</title>
+    <title>Vinheria Agnello | Painel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Nunito+Sans:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="container">
-      <h1>Upload de arquivo para Vercel Blob</h1>
-      <p class="description">
-        Selecione um arquivo e envie. A API /api/upload gravara no Blob Storage
-        e retornara a URL publica.
-      </p>
+    <div class="bg-shape bg-left"></div>
+    <div class="bg-shape bg-right"></div>
 
-      <form id="upload-form" class="card">
-        <label for="file-input">Arquivo</label>
-        <input id="file-input" name="file" type="file" required />
-        <button id="submit-button" type="submit">Enviar</button>
-      </form>
+    <header class="dashboard-header wrapper">
+      <div class="brand-block">
+        <span class="brand-icon">V</span>
+        <div>
+          <h1>VINHERIA AGNELLO</h1>
+        </div>
+      </div>
 
-      <p id="status" class="status" role="status" aria-live="polite"></p>
+      <nav class="quick-nav" aria-label="Navegacao rapida">
+        <a href="#">Brancos</a>
+        <a href="#">Rose</a>
+        <a href="#">Tintos</a>
+        <a href="#">Espumantes</a>
+      </nav>
+    </header>
 
-      <section id="result" class="result hidden">
-        <h2>Upload concluido</h2>
-        <p>
-          URL:
-          <a id="result-link" href="#" target="_blank" rel="noreferrer noopener"></a>
-        </p>
+    <main class="wrapper page-grid">
+      <section class="kpi-grid" aria-label="Indicadores">
+        <article class="kpi-card">
+          <p>Total de vinhos</p>
+          <strong>142</strong>
+        </article>
+        <article class="kpi-card">
+          <p>Disponiveis</p>
+          <strong>141</strong>
+        </article>
+        <article class="kpi-card">
+          <p>Categorias</p>
+          <strong>4</strong>
+        </article>
+        <article class="kpi-card">
+          <p>No carrinho</p>
+          <strong data-cart-count>0</strong>
+        </article>
       </section>
+
+      <section class="wine-categories">
+        <article class="panel shelf-panel" id="categoria-brancos">
+          <header class="panel-header category-header">
+            <div>
+              <h2>Brancos</h2>
+              <p>Vinhos leves, frescos e aromaticos para pratos delicados.</p>
+            </div>
+          </header>
+
+          <div class="shelf-carousel" data-carousel>
+            <button class="carousel-arrow prev" type="button" aria-label="Brancos anterior" data-carousel-prev>&lsaquo;</button>
+            <div class="carousel-viewport" data-carousel-viewport>
+              <div class="carousel-track">
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/branco-1/520/700" alt="Chardonnay Valle Central" />
+                  <div class="wine-body">
+                    <h3>Chardonnay Valle Central</h3>
+                    <p class="wine-origin">Chile | Branco</p>
+                    <p class="wine-description">Notas de frutas tropicais, final fresco e textura macia.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 72,90</strong>
+                      <button type="button" data-add-cart data-wine="Chardonnay Valle Central">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/branco-2/520/700" alt="Sauvignon Blanc Reserva" />
+                  <div class="wine-body">
+                    <h3>Sauvignon Blanc Reserva</h3>
+                    <p class="wine-origin">Argentina | Branco</p>
+                    <p class="wine-description">Aromas citricos e herbaceos, acidez vibrante para entradas.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 79,90</strong>
+                      <button type="button" data-add-cart data-wine="Sauvignon Blanc Reserva">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/branco-3/520/700" alt="Pinot Grigio Classico" />
+                  <div class="wine-body">
+                    <h3>Pinot Grigio Classico</h3>
+                    <p class="wine-origin">Italia | Branco</p>
+                    <p class="wine-description">Corpo leve, notas florais e final seco de alta bebibilidade.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 84,90</strong>
+                      <button type="button" data-add-cart data-wine="Pinot Grigio Classico">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/branco-4/520/700" alt="Vinho Branco Casa Aurora" />
+                  <div class="wine-body">
+                    <h3>Vinho Branco Casa Aurora</h3>
+                    <p class="wine-origin">Portugal | Branco</p>
+                    <p class="wine-description">Toque mineral com boa acidez, ideal para peixes grelhados.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 67,90</strong>
+                      <button type="button" data-add-cart data-wine="Vinho Branco Casa Aurora">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/branco-5/520/700" alt="Albarino Costa Dourada" />
+                  <div class="wine-body">
+                    <h3>Albarino Costa Dourada</h3>
+                    <p class="wine-origin">Espanha | Branco</p>
+                    <p class="wine-description">Perfil salino e frutado, excelente para frutos do mar.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 89,90</strong>
+                      <button type="button" data-add-cart data-wine="Albarino Costa Dourada">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/branco-6/520/700" alt="Riesling Elegance" />
+                  <div class="wine-body">
+                    <h3>Riesling Elegance</h3>
+                    <p class="wine-origin">Alemanha | Branco</p>
+                    <p class="wine-description">Frutado intenso com equilibrio entre dulcor e acidez.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 93,90</strong>
+                      <button type="button" data-add-cart data-wine="Riesling Elegance">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+            <button class="carousel-arrow next" type="button" aria-label="Brancos proximo" data-carousel-next>&rsaquo;</button>
+          </div>
+          <div class="carousel-dots" data-carousel-dots></div>
+        </article>
+
+        <article class="panel shelf-panel" id="categoria-rose">
+          <header class="panel-header category-header">
+            <div>
+              <h2>Rose</h2>
+              <p>Rotulos versateis com fruta em destaque e boa acidez.</p>
+            </div>
+          </header>
+
+          <div class="shelf-carousel" data-carousel>
+            <button class="carousel-arrow prev" type="button" aria-label="Rose anterior" data-carousel-prev>&lsaquo;</button>
+            <div class="carousel-viewport" data-carousel-viewport>
+              <div class="carousel-track">
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/rose-1/520/700" alt="Rose Mediterraneo" />
+                  <div class="wine-body">
+                    <h3>Rose Mediterraneo</h3>
+                    <p class="wine-origin">Espanha | Rose</p>
+                    <p class="wine-description">Morango fresco, final seco e toque floral elegante.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 59,90</strong>
+                      <button type="button" data-add-cart data-wine="Rose Mediterraneo">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/rose-2/520/700" alt="Rose Provence Selection" />
+                  <div class="wine-body">
+                    <h3>Rose Provence Selection</h3>
+                    <p class="wine-origin">Franca | Rose</p>
+                    <p class="wine-description">Delicado e mineral, excelente para dias quentes.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 99,90</strong>
+                      <button type="button" data-add-cart data-wine="Rose Provence Selection">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/rose-3/520/700" alt="Rose Pinot Noir" />
+                  <div class="wine-body">
+                    <h3>Rose Pinot Noir</h3>
+                    <p class="wine-origin">Chile | Rose</p>
+                    <p class="wine-description">Frutas vermelhas e acidez media para pratos leves.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 69,90</strong>
+                      <button type="button" data-add-cart data-wine="Rose Pinot Noir">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/rose-4/520/700" alt="Rose Sunset Blend" />
+                  <div class="wine-body">
+                    <h3>Rose Sunset Blend</h3>
+                    <p class="wine-origin">Uruguai | Rose</p>
+                    <p class="wine-description">Aromatico e seco, com toque citrico persistente.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 76,90</strong>
+                      <button type="button" data-add-cart data-wine="Rose Sunset Blend">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/rose-5/520/700" alt="Rose de Merlot" />
+                  <div class="wine-body">
+                    <h3>Rose de Merlot</h3>
+                    <p class="wine-origin">Brasil | Rose</p>
+                    <p class="wine-description">Perfil frutado e suave, facil de harmonizar.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 54,90</strong>
+                      <button type="button" data-add-cart data-wine="Rose de Merlot">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/rose-6/520/700" alt="Rose Premium Reserva" />
+                  <div class="wine-body">
+                    <h3>Rose Premium Reserva</h3>
+                    <p class="wine-origin">Portugal | Rose</p>
+                    <p class="wine-description">Elegante, com boa estrutura e final longo.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 82,90</strong>
+                      <button type="button" data-add-cart data-wine="Rose Premium Reserva">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+            <button class="carousel-arrow next" type="button" aria-label="Rose proximo" data-carousel-next>&rsaquo;</button>
+          </div>
+          <div class="carousel-dots" data-carousel-dots></div>
+        </article>
+
+        <article class="panel shelf-panel" id="categoria-tintos">
+          <header class="panel-header category-header">
+            <div>
+              <h2>Tintos</h2>
+              <p>Estrutura e intensidade para carnes, massas e queijos.</p>
+            </div>
+          </header>
+
+          <div class="shelf-carousel" data-carousel>
+            <button class="carousel-arrow prev" type="button" aria-label="Tintos anterior" data-carousel-prev>&lsaquo;</button>
+            <div class="carousel-viewport" data-carousel-viewport>
+              <div class="carousel-track">
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/tinto-1/520/700" alt="Gran Reserva Tannat" />
+                  <div class="wine-body">
+                    <h3>Gran Reserva Tannat</h3>
+                    <p class="wine-origin">Uruguai | Tinto</p>
+                    <p class="wine-description">Taninos presentes e notas de ameixa madura.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 89,90</strong>
+                      <button type="button" data-add-cart data-wine="Gran Reserva Tannat">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/tinto-2/520/700" alt="Malbec Andes Reserva" />
+                  <div class="wine-body">
+                    <h3>Malbec Andes Reserva</h3>
+                    <p class="wine-origin">Argentina | Tinto</p>
+                    <p class="wine-description">Fruta negra, especiarias e final redondo.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 92,90</strong>
+                      <button type="button" data-add-cart data-wine="Malbec Andes Reserva">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/tinto-3/520/700" alt="Cabernet Sauvignon Estate" />
+                  <div class="wine-body">
+                    <h3>Cabernet Sauvignon Estate</h3>
+                    <p class="wine-origin">Chile | Tinto</p>
+                    <p class="wine-description">Corpo medio, cassis e toque sutil de madeira.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 77,90</strong>
+                      <button type="button" data-add-cart data-wine="Cabernet Sauvignon Estate">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/tinto-4/520/700" alt="Merlot Grand Select" />
+                  <div class="wine-body">
+                    <h3>Merlot Grand Select</h3>
+                    <p class="wine-origin">Brasil | Tinto</p>
+                    <p class="wine-description">Macio e equilibrado com perfil frutado.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 63,90</strong>
+                      <button type="button" data-add-cart data-wine="Merlot Grand Select">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/tinto-5/520/700" alt="Syrah Private Collection" />
+                  <div class="wine-body">
+                    <h3>Syrah Private Collection</h3>
+                    <p class="wine-origin">Franca | Tinto</p>
+                    <p class="wine-description">Pimenta preta, frutas maduras e longa persistencia.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 109,90</strong>
+                      <button type="button" data-add-cart data-wine="Syrah Private Collection">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/tinto-6/520/700" alt="Tempranillo Reserva" />
+                  <div class="wine-body">
+                    <h3>Tempranillo Reserva</h3>
+                    <p class="wine-origin">Espanha | Tinto</p>
+                    <p class="wine-description">Estruturado, com toque de baunilha e couro.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 97,90</strong>
+                      <button type="button" data-add-cart data-wine="Tempranillo Reserva">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+            <button class="carousel-arrow next" type="button" aria-label="Tintos proximo" data-carousel-next>&rsaquo;</button>
+          </div>
+          <div class="carousel-dots" data-carousel-dots></div>
+        </article>
+
+        <article class="panel shelf-panel" id="categoria-espumantes">
+          <header class="panel-header category-header">
+            <div>
+              <h2>Espumantes</h2>
+              <p>Borbulhas para celebracoes e harmonizacoes leves.</p>
+            </div>
+          </header>
+
+          <div class="shelf-carousel" data-carousel>
+            <button class="carousel-arrow prev" type="button" aria-label="Espumantes anterior" data-carousel-prev>&lsaquo;</button>
+            <div class="carousel-viewport" data-carousel-viewport>
+              <div class="carousel-track">
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/espumante-1/520/700" alt="Tavino Brut Rose" />
+                  <div class="wine-body">
+                    <h3>Tavino Brut Rose</h3>
+                    <p class="wine-origin">Italia | Espumante</p>
+                    <p class="wine-description">Frutas vermelhas e bolha fina com final refrescante.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 59,90</strong>
+                      <button type="button" data-add-cart data-wine="Tavino Brut Rose">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/espumante-2/520/700" alt="Blanc de Blancs Cuvee" />
+                  <div class="wine-body">
+                    <h3>Blanc de Blancs Cuvee</h3>
+                    <p class="wine-origin">Franca | Espumante</p>
+                    <p class="wine-description">Classico, seco e elegante para aperitivos.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 119,90</strong>
+                      <button type="button" data-add-cart data-wine="Blanc de Blancs Cuvee">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/espumante-3/520/700" alt="Prosecco Extra Dry" />
+                  <div class="wine-body">
+                    <h3>Prosecco Extra Dry</h3>
+                    <p class="wine-origin">Italia | Espumante</p>
+                    <p class="wine-description">Aromas florais e pera, textura cremosa no paladar.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 82,90</strong>
+                      <button type="button" data-add-cart data-wine="Prosecco Extra Dry">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/espumante-4/520/700" alt="Cava Reserva Premium" />
+                  <div class="wine-body">
+                    <h3>Cava Reserva Premium</h3>
+                    <p class="wine-origin">Espanha | Espumante</p>
+                    <p class="wine-description">Acidez equilibrada e final seco, ideal para brindes.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 87,90</strong>
+                      <button type="button" data-add-cart data-wine="Cava Reserva Premium">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/espumante-5/520/700" alt="Moscatel Celebration" />
+                  <div class="wine-body">
+                    <h3>Moscatel Celebration</h3>
+                    <p class="wine-origin">Brasil | Espumante</p>
+                    <p class="wine-description">Levemente adocicado, com perfil aromatico intenso.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 54,90</strong>
+                      <button type="button" data-add-cart data-wine="Moscatel Celebration">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+
+                <article class="wine-card">
+                  <img src="https://picsum.photos/seed/espumante-6/520/700" alt="Brut Nature Signature" />
+                  <div class="wine-body">
+                    <h3>Brut Nature Signature</h3>
+                    <p class="wine-origin">Franca | Espumante</p>
+                    <p class="wine-description">Seco, mineral e de alta complexidade aromatica.</p>
+                    <div class="wine-footer">
+                      <strong>R$ 132,90</strong>
+                      <button type="button" data-add-cart data-wine="Brut Nature Signature">Adicionar ao carrinho</button>
+                    </div>
+                  </div>
+                </article>
+              </div>
+            </div>
+            <button class="carousel-arrow next" type="button" aria-label="Espumantes proximo" data-carousel-next>&rsaquo;</button>
+          </div>
+          <div class="carousel-dots" data-carousel-dots></div>
+        </article>
+      </section>
+
+      <p class="cart-feedback" data-cart-feedback aria-live="polite"></p>
     </main>
 
     <script>
-      const form = document.getElementById('upload-form');
-      const fileInput = document.getElementById('file-input');
-      const submitButton = document.getElementById('submit-button');
-      const statusElement = document.getElementById('status');
-      const resultElement = document.getElementById('result');
-      const resultLink = document.getElementById('result-link');
+      const cartCountTargets = document.querySelectorAll('[data-cart-count]');
+      const addCartButtons = document.querySelectorAll('[data-add-cart]');
+      const cartFeedback = document.querySelector('[data-cart-feedback]');
+      const carousels = document.querySelectorAll('[data-carousel]');
+      let cartCount = 0;
 
-      form.addEventListener('submit', async (event) => {
-        event.preventDefault();
+      const applyCartCount = () => {
+        cartCountTargets.forEach((target) => {
+          target.textContent = String(cartCount);
+        });
+      };
 
-        const file = fileInput.files && fileInput.files[0];
-        if (!file) {
-          statusElement.textContent = 'Selecione um arquivo antes de enviar.';
+      addCartButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const wineName = button.getAttribute('data-wine') || 'Vinho selecionado';
+          cartCount += 1;
+          applyCartCount();
+
+          if (cartFeedback) {
+            cartFeedback.textContent = `${wineName} adicionado ao carrinho.`;
+          }
+        });
+      });
+
+      const setupCarousel = (carousel) => {
+        const viewport = carousel.querySelector('[data-carousel-viewport]');
+        const prevButton = carousel.querySelector('[data-carousel-prev]');
+        const nextButton = carousel.querySelector('[data-carousel-next]');
+        const dotsContainer = carousel.parentElement.querySelector('[data-carousel-dots]');
+
+        if (!viewport || !prevButton || !nextButton || !dotsContainer) {
           return;
         }
 
-        submitButton.disabled = true;
-        resultElement.classList.add('hidden');
-        statusElement.textContent = 'Enviando arquivo...';
+        let pageCount = 1;
+        let resizeTimer;
 
-        try {
-          const response = await fetch(
-            '/api/upload?filename=' + encodeURIComponent(file.name),
-            {
-              method: 'POST',
-              body: file,
-            }
-          );
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.message || data.error || 'Falha no upload.');
+        const getPageCount = () => {
+          if (viewport.clientWidth <= 0) {
+            return 1;
           }
 
-          statusElement.textContent = 'Upload realizado com sucesso.';
-          resultLink.href = data.url;
-          resultLink.textContent = data.url;
-          resultElement.classList.remove('hidden');
-        } catch (error) {
-          const message = error instanceof Error ? error.message : 'Erro inesperado.';
-          statusElement.textContent = message;
-        } finally {
-          submitButton.disabled = false;
-        }
+          const pages = Math.ceil((viewport.scrollWidth - viewport.clientWidth) / viewport.clientWidth) + 1;
+          return Math.max(1, pages);
+        };
+
+        const getCurrentPage = () => {
+          if (viewport.clientWidth <= 0) {
+            return 0;
+          }
+
+          const page = Math.round(viewport.scrollLeft / viewport.clientWidth);
+          return Math.min(Math.max(0, page), pageCount - 1);
+        };
+
+        const goToPage = (page) => {
+          const safePage = Math.min(Math.max(0, page), pageCount - 1);
+          viewport.scrollTo({
+            left: safePage * viewport.clientWidth,
+            behavior: 'smooth',
+          });
+        };
+
+        const renderDots = () => {
+          dotsContainer.innerHTML = '';
+
+          for (let index = 0; index < pageCount; index += 1) {
+            const dot = document.createElement('button');
+            dot.type = 'button';
+            dot.className = 'carousel-dot';
+            dot.setAttribute('aria-label', `Ir para pagina ${index + 1}`);
+            dot.addEventListener('click', () => goToPage(index));
+            dotsContainer.appendChild(dot);
+          }
+        };
+
+        const updateUI = () => {
+          const currentPage = getCurrentPage();
+          const dots = dotsContainer.querySelectorAll('.carousel-dot');
+
+          dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === currentPage);
+          });
+
+          prevButton.disabled = currentPage === 0;
+          nextButton.disabled = currentPage >= pageCount - 1;
+
+          const isSinglePage = pageCount <= 1;
+          dotsContainer.classList.toggle('is-hidden', isSinglePage);
+          prevButton.classList.toggle('is-hidden', isSinglePage);
+          nextButton.classList.toggle('is-hidden', isSinglePage);
+        };
+
+        const refresh = () => {
+          pageCount = getPageCount();
+          renderDots();
+          updateUI();
+        };
+
+        prevButton.addEventListener('click', () => {
+          goToPage(getCurrentPage() - 1);
+        });
+
+        nextButton.addEventListener('click', () => {
+          goToPage(getCurrentPage() + 1);
+        });
+
+        viewport.addEventListener('scroll', () => {
+          window.requestAnimationFrame(updateUI);
+        });
+
+        window.addEventListener('resize', () => {
+          window.clearTimeout(resizeTimer);
+          resizeTimer = window.setTimeout(refresh, 140);
+        });
+
+        refresh();
+      };
+
+      carousels.forEach((carousel) => {
+        setupCarousel(carousel);
       });
+
+      applyCartCount();
     </script>
   </body>
 </html>
