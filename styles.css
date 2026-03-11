@@ -350,10 +350,34 @@ body.cart-open {
 }
 
 .wine-description {
+  --description-line-height: 1.5;
+  --description-max-lines: 8;
   margin: 0;
   color: #e2caa9;
-  line-height: 1.5;
+  line-height: var(--description-line-height);
   font-size: 0.92rem;
+  max-height: calc(1em * var(--description-line-height) * var(--description-max-lines));
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(183, 132, 77, 0.5) rgba(42, 17, 20, 0.55);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 84%, rgba(0, 0, 0, 0.22) 100%);
+  overflow-wrap: anywhere;
+}
+
+.wine-description::-webkit-scrollbar {
+  width: 5px;
+}
+
+.wine-description::-webkit-scrollbar-track {
+  background: rgba(42, 17, 20, 0.55);
+  border-radius: 999px;
+}
+
+.wine-description::-webkit-scrollbar-thumb {
+  background: rgba(183, 132, 77, 0.5);
+  border-radius: 999px;
 }
 
 .wine-footer {
@@ -1152,5 +1176,9 @@ body.cart-open {
 
   .wine-footer button {
     width: 100%;
+  }
+
+  .wine-description {
+    --description-max-lines: 7;
   }
 }
