@@ -554,12 +554,6 @@
           <p class="admin-help">Historico ficticio de pedidos do usuario e disponibilidade atual dos vinhos.</p>
           <ul class="user-history-list" data-user-history-list></ul>
         </article>
-
-        <article class="admin-card">
-          <h3>Vinhos para compra</h3>
-          <p class="admin-help">Opcoes ficticias com status de disponibilidade.</p>
-          <ul class="user-stock-list" data-user-stock-list></ul>
-        </article>
       </section>
 
       <button class="admin-logout is-hidden" type="button" data-admin-logout>Encerrar sessao</button>
@@ -595,7 +589,6 @@
       const adminWineSearchInput = document.querySelector('[data-admin-wine-search]');
       const adminEditorGrid = document.querySelector('[data-admin-editor-grid]');
       const userHistoryList = document.querySelector('[data-user-history-list]');
-      const userStockList = document.querySelector('[data-user-stock-list]');
 
       const CATALOG_STORAGE_KEY = 'vinheria_catalog_v2';
       const LEGACY_ADMIN_STORAGE_KEY = 'vinheria_admin_wines_v1';
@@ -614,13 +607,6 @@
         { wineName: 'Chardonnay Valle Central', date: '12/02/2026', quantity: 2, total: 145.8 },
         { wineName: 'Gran Reserva Tannat', date: '03/02/2026', quantity: 1, total: 119.9 },
         { wineName: 'Tavino Brut Rose', date: '28/01/2026', quantity: 3, total: 296.7 },
-      ];
-
-      const USER_SAMPLE_WINE_OPTIONS = [
-        { name: 'Sauvignon Blanc Reserva', available: true, country: 'Argentina' },
-        { name: 'Cava Reserva Premium', available: false, country: 'Espanha' },
-        { name: 'Merlot Grand Select', available: true, country: 'Brasil' },
-        { name: 'Rose Sunset Blend', available: false, country: 'Portugal' },
       ];
 
       const wineTypeLabels = {
@@ -874,14 +860,12 @@
           return {
             name: wineName,
             available: fallbackAvailable,
-            country: 'Origem nao informada',
           };
         }
 
         return {
           name: wine.name,
           available: wine.available,
-          country: wine.country,
         };
       };
 
@@ -930,41 +914,8 @@
         });
       };
 
-      const renderUserWineOptions = () => {
-        if (!userStockList) {
-          return;
-        }
-
-        userStockList.innerHTML = '';
-
-        USER_SAMPLE_WINE_OPTIONS.forEach((sampleWine) => {
-          const availability = resolveWineAvailability(sampleWine.name, sampleWine.available);
-
-          const listItem = document.createElement('li');
-          listItem.className = 'user-stock-item';
-
-          const content = document.createElement('div');
-          content.className = 'user-stock-main';
-
-          const title = document.createElement('strong');
-          title.textContent = availability.name;
-
-          const meta = document.createElement('span');
-          const country = availability.country || sampleWine.country || 'Origem nao informada';
-          meta.textContent = country;
-
-          content.appendChild(title);
-          content.appendChild(meta);
-
-          listItem.appendChild(content);
-          listItem.appendChild(createAvailabilityBadge(availability.available));
-          userStockList.appendChild(listItem);
-        });
-      };
-
       const renderUserArea = () => {
         renderUserPurchaseHistory();
-        renderUserWineOptions();
       };
 
       const updateAdminAuthUI = () => {

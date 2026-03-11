@@ -776,8 +776,7 @@ body.cart-open {
   gap: 12px;
 }
 
-.user-history-list,
-.user-stock-list {
+.user-history-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -785,8 +784,7 @@ body.cart-open {
   gap: 10px;
 }
 
-.user-history-item,
-.user-stock-item {
+.user-history-item {
   border-radius: 12px;
   border: 1px solid var(--stroke-soft);
   background: rgba(24, 10, 13, 0.7);
@@ -795,26 +793,16 @@ body.cart-open {
   gap: 6px;
 }
 
-.user-stock-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.user-history-main,
-.user-stock-main {
+.user-history-main {
   display: grid;
   gap: 3px;
 }
 
-.user-history-main strong,
-.user-stock-main strong {
+.user-history-main strong {
   font-size: 0.95rem;
 }
 
-.user-history-main span,
-.user-stock-main span {
+.user-history-main span {
   color: var(--text-muted);
   font-size: 0.82rem;
 }
@@ -1155,11 +1143,6 @@ body.cart-open {
 
   .admin-panel.is-admin-view .admin-controls {
     grid-template-columns: 1fr;
-  }
-
-  .user-stock-item {
-    flex-direction: column;
-    align-items: flex-start;
   }
 
   .wine-footer {
