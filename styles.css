@@ -252,10 +252,12 @@ body.cart-open {
   margin-top: 14px;
   display: grid;
   gap: 14px;
+  justify-items: center;
 }
 
 .shelf-panel {
   padding: 18px;
+  width: min(100%, 1160px);
 }
 
 .panel-header {
@@ -283,8 +285,7 @@ body.cart-open {
   --cards-per-view: 4;
   --cards-gap: 14px;
   position: relative;
-  max-width: min(100%, 1160px);
-  margin-inline: auto;
+  width: 100%;
 }
 
 .carousel-viewport {
