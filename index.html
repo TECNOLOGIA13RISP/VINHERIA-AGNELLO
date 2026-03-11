@@ -467,6 +467,7 @@
         <span>Total estimado</span>
         <strong data-cart-total>R$ 0,00</strong>
       </footer>
+      <button class="cart-checkout" type="button" data-cart-checkout>Finalizar compra</button>
     </aside>
 
     <div class="admin-overlay" data-admin-overlay></div>
@@ -565,7 +566,7 @@
       <section class="admin-user-view is-hidden" data-admin-user-view>
         <article class="admin-card">
           <h3>Compras anteriores</h3>
-          <p class="admin-help">Historico ficticio de pedidos do usuario e disponibilidade atual dos vinhos.</p>
+          <p class="admin-help">Historico de pedidos do usuario e disponibilidade atual dos vinhos.</p>
           <ul class="user-history-list" data-user-history-list></ul>
         </article>
       </section>
@@ -587,6 +588,7 @@
       const cartItemsContainer = document.querySelector('[data-cart-items]');
       const cartEmptyMessage = document.querySelector('[data-cart-empty]');
       const cartTotalElement = document.querySelector('[data-cart-total]');
+      const cartCheckoutButton = document.querySelector('[data-cart-checkout]');
       const adminToggleButton = document.querySelector('[data-admin-toggle]');
       const adminPanel = document.querySelector('[data-admin-panel]');
       const adminOverlay = document.querySelector('[data-admin-overlay]');
@@ -609,6 +611,7 @@
       const CATALOG_STORAGE_KEY = 'vinheria_catalog_v2';
       const LEGACY_ADMIN_STORAGE_KEY = 'vinheria_admin_wines_v1';
       const CUSTOM_USERS_STORAGE_KEY = 'vinheria_custom_users_v1';
+      const USER_PURCHASE_HISTORY_STORAGE_KEY = 'vinheria_user_purchase_history_v1';
       const AUTH_ROLE_KEY = 'vinheria_auth_role_v1';
       const AUTH_USER_NAME_KEY = 'vinheria_auth_user_name_v1';
       const ADMIN_CREDENTIALS = {
@@ -621,7 +624,7 @@
         password: '123',
       };
 
-      const USER_PURCHASE_HISTORY = [
+      const DEFAULT_USER_PURCHASE_HISTORY = [
         { wineName: 'Chardonnay Valle Central', date: '12/02/2026', quantity: 2, total: 145.8 },
         { wineName: 'Gran Reserva Tannat', date: '03/02/2026', quantity: 1, total: 119.9 },
         { wineName: 'Tavino Brut Rose', date: '28/01/2026', quantity: 3, total: 296.7 },
@@ -645,6 +648,7 @@
       const carouselState = new WeakMap();
       const catalogWines = [];
       const customUsers = [];
+      const userPurchaseHistoryByUser = new Map();
       let cartCount = 0;
       let adminWineSearchTerm = '';
       let cartFeedbackTimer;
@@ -719,6 +723,19 @@
 
       const normalizeAuthUsername = (value) => {
         return normalizeSearchText(value).replace(/\s+/g, ' ').trim();
+      };
+
+      const getUserHistoryKey = (username) => {
+        return normalizeAuthUsername(username);
+      };
+
+      const getActiveUserName = () => {
+        const activeUserName = String(window.sessionStorage.getItem(AUTH_USER_NAME_KEY) || '').trim();
+        if (activeUserName) {
+          return activeUserName;
+        }
+
+        return COMMON_USER_CREDENTIALS.displayName;
       };
 
       const normalizeUserAccount = (account) => {
@@ -809,6 +826,116 @@
       const loadCustomUsers = () => {
         const fromStorage = readStoredCustomUsers();
         customUsers.splice(0, customUsers.length, ...fromStorage);
+      };
+
+      const normalizePurchaseHistoryEntry = (entry) => {
+        if (!entry || typeof entry !== 'object') {
+          return null;
+        }
+
+        const wineName = String(entry.wineName || '').trim();
+        const date = String(entry.date || '').trim();
+        const quantity = Number(entry.quantity);
+        const total = Number(entry.total);
+
+        if (!wineName || !date || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(total) || total < 0) {
+          return null;
+        }
+
+        return {
+          wineName,
+          date,
+          quantity,
+          total,
+        };
+      };
+
+      const clonePurchaseHistory = (entries = []) => {
+        return entries
+          .map((entry) => normalizePurchaseHistoryEntry(entry))
+          .filter(Boolean);
+      };
+
+      const readStoredUserPurchaseHistory = () => {
+        const raw = window.localStorage.getItem(USER_PURCHASE_HISTORY_STORAGE_KEY);
+        if (!raw) {
+          return {};
+        }
+
+        let parsed;
+        try {
+          parsed = JSON.parse(raw);
+        } catch {
+          return {};
+        }
+
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          return {};
+        }
+
+        const sanitized = {};
+        Object.entries(parsed).forEach(([usernameKey, history]) => {
+          if (typeof usernameKey !== 'string' || !Array.isArray(history)) {
+            return;
+          }
+
+          const normalizedKey = getUserHistoryKey(usernameKey);
+          if (!normalizedKey) {
+            return;
+          }
+
+          const normalizedHistory = clonePurchaseHistory(history);
+          sanitized[normalizedKey] = normalizedHistory;
+        });
+
+        return sanitized;
+      };
+
+      const persistUserPurchaseHistory = () => {
+        const serialized = {};
+        userPurchaseHistoryByUser.forEach((history, key) => {
+          serialized[key] = clonePurchaseHistory(history);
+        });
+
+        window.localStorage.setItem(USER_PURCHASE_HISTORY_STORAGE_KEY, JSON.stringify(serialized));
+      };
+
+      const loadUserPurchaseHistory = () => {
+        userPurchaseHistoryByUser.clear();
+
+        const fromStorage = readStoredUserPurchaseHistory();
+        Object.entries(fromStorage).forEach(([key, history]) => {
+          userPurchaseHistoryByUser.set(key, clonePurchaseHistory(history));
+        });
+      };
+
+      const getUserPurchaseHistory = (username) => {
+        const key = getUserHistoryKey(username);
+        if (!key) {
+          return [];
+        }
+
+        const fromStorage = userPurchaseHistoryByUser.get(key);
+        if (Array.isArray(fromStorage)) {
+          return clonePurchaseHistory(fromStorage);
+        }
+
+        const commonUserKey = getUserHistoryKey(COMMON_USER_CREDENTIALS.displayName);
+        if (key === commonUserKey) {
+          return clonePurchaseHistory(DEFAULT_USER_PURCHASE_HISTORY);
+        }
+
+        return [];
+      };
+
+      const saveUserPurchaseHistory = (username, entries) => {
+        const key = getUserHistoryKey(username);
+        if (!key) {
+          return;
+        }
+
+        userPurchaseHistoryByUser.set(key, clonePurchaseHistory(entries));
+        persistUserPurchaseHistory();
       };
 
       const getTrackByType = (type) => {
@@ -996,8 +1123,18 @@
         }
 
         userHistoryList.innerHTML = '';
+        const activeUserName = getActiveUserName();
+        const purchaseHistory = getUserPurchaseHistory(activeUserName);
 
-        USER_PURCHASE_HISTORY.forEach((purchase) => {
+        if (purchaseHistory.length === 0) {
+          const empty = document.createElement('li');
+          empty.className = 'user-history-item';
+          empty.textContent = 'Nenhuma compra registrada ainda.';
+          userHistoryList.appendChild(empty);
+          return;
+        }
+
+        purchaseHistory.forEach((purchase) => {
           const availability = resolveWineAvailability(purchase.wineName, true);
 
           const listItem = document.createElement('li');
@@ -1073,6 +1210,8 @@
         if (isUser) {
           renderUserArea();
         }
+
+        renderCart();
       };
 
       const renderCart = () => {
@@ -1157,6 +1296,13 @@
         cartEmptyMessage.classList.toggle('is-hidden', hasItems);
         cartItemsContainer.classList.toggle('is-hidden', !hasItems);
         cartTotalElement.textContent = formatCurrency(total);
+
+        if (cartCheckoutButton) {
+          const isUser = getAuthRole() === 'user';
+          cartCheckoutButton.disabled = !hasItems || !isUser;
+          cartCheckoutButton.textContent = isUser ? 'Finalizar compra' : 'Entre como usuario';
+        }
+
         applyCartCount();
       };
 
@@ -1187,6 +1333,39 @@
         cartItems.delete(itemId);
         renderCart();
         showTemporaryCartFeedback(`${item.name} removido do carrinho.`);
+      };
+
+      const finalizeCartPurchase = () => {
+        const role = getAuthRole();
+        if (role !== 'user') {
+          showTemporaryCartFeedback('Entre como usuario para finalizar a compra.');
+          return;
+        }
+
+        if (cartItems.size === 0) {
+          showTemporaryCartFeedback('Adicione vinhos no carrinho para finalizar.');
+          return;
+        }
+
+        const activeUserName = getActiveUserName();
+        const currentHistory = getUserPurchaseHistory(activeUserName);
+        const purchaseDate = new Intl.DateTimeFormat('pt-BR').format(new Date());
+
+        const newEntries = [];
+        cartItems.forEach((item) => {
+          newEntries.push({
+            wineName: item.name,
+            date: purchaseDate,
+            quantity: item.quantity,
+            total: Number((item.price * item.quantity).toFixed(2)),
+          });
+        });
+
+        saveUserPurchaseHistory(activeUserName, [...newEntries, ...currentHistory]);
+        cartItems.clear();
+        renderCart();
+        renderUserArea();
+        showTemporaryCartFeedback('Compra finalizada com sucesso.');
       };
 
       const findCatalogWineById = (wineId) => {
@@ -1821,6 +2000,7 @@
 
       loadCatalogWines();
       loadCustomUsers();
+      loadUserPurchaseHistory();
       renderCatalog();
       renderAdminEditor();
       renderAdminUsers();
@@ -1845,6 +2025,10 @@
 
       cartOverlay?.addEventListener('click', () => {
         setCartOpen(false);
+      });
+
+      cartCheckoutButton?.addEventListener('click', () => {
+        finalizeCartPurchase();
       });
 
       cartItemsContainer?.addEventListener('click', (event) => {

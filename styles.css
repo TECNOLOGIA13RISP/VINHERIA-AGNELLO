@@ -695,6 +695,33 @@ body.cart-open {
   color: #f4e2c4;
 }
 
+.cart-checkout {
+  width: 100%;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(145deg, var(--accent), var(--accent-strong));
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 0.86rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 11px 16px;
+  cursor: pointer;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+.cart-checkout:hover {
+  filter: brightness(1.08);
+}
+
+.cart-checkout:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.22);
+  opacity: 0.65;
+}
+
 .admin-overlay {
   position: fixed;
   inset: 0;
