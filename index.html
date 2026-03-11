@@ -25,10 +25,10 @@
       </div>
 
       <nav class="quick-nav" aria-label="Navegacao rapida">
-        <a href="#">Brancos</a>
-        <a href="#">Rose</a>
-        <a href="#">Tintos</a>
-        <a href="#">Espumantes</a>
+        <a href="#categoria-brancos">Brancos</a>
+        <a href="#categoria-rose">Rose</a>
+        <a href="#categoria-tintos">Tintos</a>
+        <a href="#categoria-espumantes">Espumantes</a>
         <button
           class="admin-toggle"
           type="button"
@@ -478,11 +478,10 @@
       <p class="admin-session" data-admin-session></p>
 
       <section class="admin-auth" data-admin-auth>
-        <h3>Acesso de usuario e administrador</h3>
-        <p>Use `admin/admin` para cadastro ou `GUILHERME GOMES OLIVEIRA/123` para usuario comum.</p>
+        <h3>Acesso de usuario</h3>
         <form class="admin-form" data-admin-login-form>
           <label for="admin-user">Usuario</label>
-          <input id="admin-user" name="username" type="text" placeholder="admin ou GUILHERME GOMES OLIVEIRA" required />
+          <input id="admin-user" name="username" type="text" placeholder="Usuario" required />
 
           <label for="admin-pass">Senha</label>
           <input id="admin-pass" name="password" type="password" placeholder="Sua senha" required />
@@ -546,6 +545,21 @@
           </div>
           <div class="admin-editor-grid" data-admin-editor-grid></div>
         </article>
+
+        <article class="admin-card">
+          <h3>Cadastrar usuario</h3>
+          <p class="admin-help">Crie credenciais para acesso de usuario comum no painel.</p>
+          <form class="admin-form" data-admin-user-form>
+            <label for="new-panel-user">Usuario</label>
+            <input id="new-panel-user" name="username" type="text" placeholder="Ex.: joao.silva" required />
+
+            <label for="new-panel-password">Senha</label>
+            <input id="new-panel-password" name="password" type="password" placeholder="Defina uma senha" required />
+
+            <button type="submit">Adicionar usuario</button>
+          </form>
+          <div class="admin-user-list" data-admin-user-list></div>
+        </article>
       </section>
 
       <section class="admin-user-view is-hidden" data-admin-user-view>
@@ -584,15 +598,19 @@
       const adminUserViewSection = document.querySelector('[data-admin-user-view]');
       const adminLoginForm = document.querySelector('[data-admin-login-form]');
       const adminWineForm = document.querySelector('[data-admin-wine-form]');
+      const adminUserForm = document.querySelector('[data-admin-user-form]');
       const adminLogoutButtons = document.querySelectorAll('[data-admin-logout]');
       const adminFeedback = document.querySelector('[data-admin-feedback]');
       const adminWineSearchInput = document.querySelector('[data-admin-wine-search]');
       const adminEditorGrid = document.querySelector('[data-admin-editor-grid]');
+      const adminUserList = document.querySelector('[data-admin-user-list]');
       const userHistoryList = document.querySelector('[data-user-history-list]');
 
       const CATALOG_STORAGE_KEY = 'vinheria_catalog_v2';
       const LEGACY_ADMIN_STORAGE_KEY = 'vinheria_admin_wines_v1';
+      const CUSTOM_USERS_STORAGE_KEY = 'vinheria_custom_users_v1';
       const AUTH_ROLE_KEY = 'vinheria_auth_role_v1';
+      const AUTH_USER_NAME_KEY = 'vinheria_auth_user_name_v1';
       const ADMIN_CREDENTIALS = {
         username: 'admin',
         password: 'admin',
@@ -626,6 +644,7 @@
       const cartItems = new Map();
       const carouselState = new WeakMap();
       const catalogWines = [];
+      const customUsers = [];
       let cartCount = 0;
       let adminWineSearchTerm = '';
       let cartFeedbackTimer;
@@ -696,6 +715,100 @@
           .replace(/[\u0300-\u036f]/g, '')
           .toLowerCase()
           .trim();
+      };
+
+      const normalizeAuthUsername = (value) => {
+        return normalizeSearchText(value).replace(/\s+/g, ' ').trim();
+      };
+
+      const normalizeUserAccount = (account) => {
+        if (!account || typeof account !== 'object') {
+          return null;
+        }
+
+        const username = String(account.username || '').trim().replace(/\s+/g, ' ');
+        const password = String(account.password || '').trim();
+
+        if (!username || !password) {
+          return null;
+        }
+
+        return {
+          username,
+          password,
+        };
+      };
+
+      const readStoredCustomUsers = () => {
+        const raw = window.localStorage.getItem(CUSTOM_USERS_STORAGE_KEY);
+        if (!raw) {
+          return [];
+        }
+
+        let parsed;
+        try {
+          parsed = JSON.parse(raw);
+        } catch {
+          return [];
+        }
+
+        if (!Array.isArray(parsed)) {
+          return [];
+        }
+
+        return parsed
+          .map((account) => normalizeUserAccount(account))
+          .filter(Boolean);
+      };
+
+      const persistCustomUsers = () => {
+        window.localStorage.setItem(CUSTOM_USERS_STORAGE_KEY, JSON.stringify(customUsers));
+      };
+
+      const findCustomUserByUsername = (username) => {
+        const normalizedUsername = normalizeAuthUsername(username);
+        return customUsers.find((account) => normalizeAuthUsername(account.username) === normalizedUsername) || null;
+      };
+
+      const renderAdminUsers = () => {
+        if (!adminUserList) {
+          return;
+        }
+
+        adminUserList.innerHTML = '';
+
+        if (customUsers.length === 0) {
+          const empty = document.createElement('p');
+          empty.className = 'admin-empty';
+          empty.textContent = 'Nenhum usuario adicional cadastrado.';
+          adminUserList.appendChild(empty);
+          return;
+        }
+
+        const list = document.createElement('ul');
+        list.className = 'admin-user-items';
+
+        customUsers.forEach((account) => {
+          const item = document.createElement('li');
+          item.className = 'admin-user-item';
+
+          const username = document.createElement('strong');
+          username.textContent = account.username;
+
+          const meta = document.createElement('span');
+          meta.textContent = 'Senha cadastrada.';
+
+          item.appendChild(username);
+          item.appendChild(meta);
+          list.appendChild(item);
+        });
+
+        adminUserList.appendChild(list);
+      };
+
+      const loadCustomUsers = () => {
+        const fromStorage = readStoredCustomUsers();
+        customUsers.splice(0, customUsers.length, ...fromStorage);
       };
 
       const getTrackByType = (type) => {
@@ -935,7 +1048,8 @@
           if (isAdmin) {
             adminSessionInfo.textContent = 'Perfil ativo: ADMINISTRADOR';
           } else if (isUser) {
-            adminSessionInfo.textContent = `Perfil ativo: ${COMMON_USER_CREDENTIALS.displayName}`;
+            const activeUserName = window.sessionStorage.getItem(AUTH_USER_NAME_KEY) || COMMON_USER_CREDENTIALS.displayName;
+            adminSessionInfo.textContent = `Perfil ativo: ${activeUserName}`;
           } else {
             adminSessionInfo.textContent = '';
           }
@@ -953,6 +1067,7 @@
 
         adminPanel?.classList.toggle('is-admin-view', isAdmin);
         if (isAdmin) {
+          renderAdminUsers();
           renderAdminEditor();
         }
         if (isUser) {
@@ -1705,8 +1820,10 @@
       });
 
       loadCatalogWines();
+      loadCustomUsers();
       renderCatalog();
       renderAdminEditor();
+      renderAdminUsers();
 
       document.addEventListener('click', (event) => {
         const addButton = event.target.closest('[data-add-cart]');
@@ -1858,11 +1975,16 @@
       adminLoginForm?.addEventListener('submit', (event) => {
         event.preventDefault();
         const formData = new FormData(adminLoginForm);
-        const username = String(formData.get('username') || '').trim().toLowerCase();
+        const username = String(formData.get('username') || '').trim();
+        const normalizedUsername = normalizeAuthUsername(username);
         const password = String(formData.get('password') || '').trim();
 
-        if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
+        if (
+          normalizedUsername === normalizeAuthUsername(ADMIN_CREDENTIALS.username) &&
+          password === ADMIN_CREDENTIALS.password
+        ) {
           window.sessionStorage.setItem(AUTH_ROLE_KEY, 'admin');
+          window.sessionStorage.removeItem(AUTH_USER_NAME_KEY);
           updateAdminAuthUI();
           setAdminOpen(true);
           adminLoginForm.reset();
@@ -1870,11 +1992,25 @@
           return;
         }
 
-        if (username === COMMON_USER_CREDENTIALS.username.toLowerCase() && password === COMMON_USER_CREDENTIALS.password) {
+        if (
+          normalizedUsername === normalizeAuthUsername(COMMON_USER_CREDENTIALS.username) &&
+          password === COMMON_USER_CREDENTIALS.password
+        ) {
           window.sessionStorage.setItem(AUTH_ROLE_KEY, 'user');
+          window.sessionStorage.setItem(AUTH_USER_NAME_KEY, COMMON_USER_CREDENTIALS.displayName);
           updateAdminAuthUI();
           adminLoginForm.reset();
           showAdminFeedback(`Login de usuario comum realizado: ${COMMON_USER_CREDENTIALS.displayName}.`);
+          return;
+        }
+
+        const customUser = findCustomUserByUsername(username);
+        if (customUser && password === customUser.password) {
+          window.sessionStorage.setItem(AUTH_ROLE_KEY, 'user');
+          window.sessionStorage.setItem(AUTH_USER_NAME_KEY, customUser.username);
+          updateAdminAuthUI();
+          adminLoginForm.reset();
+          showAdminFeedback(`Login de usuario comum realizado: ${customUser.username}.`);
           return;
         }
 
@@ -1882,6 +2018,49 @@
       });
 
       adminWineForm?.addEventListener('submit', handleAdminWineSubmit);
+
+      adminUserForm?.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        if (!isAdminAuthenticated()) {
+          showAdminFeedback('Somente o ADM pode cadastrar usuarios.', true);
+          return;
+        }
+
+        const formData = new FormData(adminUserForm);
+        const username = String(formData.get('username') || '').trim().replace(/\s+/g, ' ');
+        const password = String(formData.get('password') || '').trim();
+        const normalizedUsername = normalizeAuthUsername(username);
+
+        if (username.length < 3 || password.length < 3) {
+          showAdminFeedback('Informe usuario e senha com pelo menos 3 caracteres.', true);
+          return;
+        }
+
+        if (normalizedUsername === normalizeAuthUsername(ADMIN_CREDENTIALS.username)) {
+          showAdminFeedback('Este usuario e reservado para administrador.', true);
+          return;
+        }
+
+        if (normalizedUsername === normalizeAuthUsername(COMMON_USER_CREDENTIALS.username)) {
+          showAdminFeedback('Este usuario padrao ja existe.', true);
+          return;
+        }
+
+        if (findCustomUserByUsername(username)) {
+          showAdminFeedback('Ja existe um usuario com este nome.', true);
+          return;
+        }
+
+        customUsers.push({
+          username,
+          password,
+        });
+        persistCustomUsers();
+        renderAdminUsers();
+        adminUserForm.reset();
+        showAdminFeedback(`Usuario ${username} cadastrado com sucesso.`);
+      });
 
       adminWineSearchInput?.addEventListener('input', (event) => {
         adminWineSearchTerm = String(event.target.value || '');
@@ -1891,6 +2070,7 @@
       adminLogoutButtons.forEach((button) => {
         button.addEventListener('click', () => {
           window.sessionStorage.removeItem(AUTH_ROLE_KEY);
+          window.sessionStorage.removeItem(AUTH_USER_NAME_KEY);
           adminWineSearchTerm = '';
           if (adminWineSearchInput) {
             adminWineSearchInput.value = '';

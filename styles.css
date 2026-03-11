@@ -22,6 +22,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -1054,6 +1058,39 @@ body.cart-open {
 
 .admin-editor-toolbar input::placeholder {
   color: rgba(226, 202, 169, 0.55);
+}
+
+.admin-user-list {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-user-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+
+.admin-user-item {
+  border-radius: 10px;
+  border: 1px solid var(--stroke-soft);
+  background: rgba(26, 10, 13, 0.7);
+  padding: 8px 10px;
+  display: grid;
+  gap: 2px;
+}
+
+.admin-user-item strong {
+  font-size: 0.9rem;
+}
+
+.admin-user-item span {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .admin-feedback {
