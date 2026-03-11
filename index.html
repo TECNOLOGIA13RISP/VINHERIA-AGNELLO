@@ -547,19 +547,25 @@
           <div class="admin-editor-grid" data-admin-editor-grid></div>
         </article>
 
-        <article class="admin-card">
+        <article class="admin-card admin-user-card">
           <h3>Cadastrar usuario</h3>
           <p class="admin-help">Crie credenciais para acesso de usuario comum no painel.</p>
-          <form class="admin-form" data-admin-user-form>
-            <label for="new-panel-user">Usuario</label>
-            <input id="new-panel-user" name="username" type="text" placeholder="Ex.: joao.silva" required />
+          <div class="admin-user-management">
+            <form class="admin-form admin-user-form" data-admin-user-form>
+              <label for="new-panel-user">Usuario</label>
+              <input id="new-panel-user" name="username" type="text" placeholder="Ex.: joao.silva" required />
 
-            <label for="new-panel-password">Senha</label>
-            <input id="new-panel-password" name="password" type="password" placeholder="Defina uma senha" required />
+              <label for="new-panel-password">Senha</label>
+              <input id="new-panel-password" name="password" type="password" placeholder="Defina uma senha" required />
 
-            <button type="submit">Adicionar usuario</button>
-          </form>
-          <div class="admin-user-list" data-admin-user-list></div>
+              <button type="submit">Adicionar usuario</button>
+            </form>
+
+            <div class="admin-user-list-panel">
+              <p class="admin-user-list-title">Usuarios cadastrados</p>
+              <div class="admin-user-list" data-admin-user-list></div>
+            </div>
+          </div>
         </article>
       </section>
 
