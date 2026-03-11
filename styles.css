@@ -283,6 +283,8 @@ body.cart-open {
   --cards-per-view: 4;
   --cards-gap: 14px;
   position: relative;
+  max-width: min(100%, 1160px);
+  margin-inline: auto;
 }
 
 .carousel-viewport {
