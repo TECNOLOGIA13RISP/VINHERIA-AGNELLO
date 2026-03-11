@@ -119,7 +119,16 @@ body.cart-open {
   gap: 10px;
 }
 
+.quick-nav a,
+.quick-nav .admin-toggle,
+.quick-nav .cart-toggle {
+  white-space: nowrap;
+}
+
 .quick-nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 9px 14px;
   border-radius: 999px;
   border: 1px solid transparent;
@@ -292,6 +301,11 @@ body.cart-open {
 .carousel-track {
   display: flex;
   gap: var(--cards-gap);
+  justify-content: flex-start;
+}
+
+.shelf-carousel.is-single-page .carousel-track {
+  justify-content: center;
 }
 
 .wine-card {
@@ -574,6 +588,8 @@ body.cart-open {
   list-style: none;
   display: grid;
   gap: 10px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -1189,12 +1205,16 @@ body.cart-open {
 @media (max-width: 1180px) {
   .dashboard-header {
     grid-template-columns: 1fr;
-    justify-items: start;
+    justify-items: stretch;
+    gap: 16px;
+    padding: 18px 20px;
   }
 
   .quick-nav {
-    justify-self: start;
+    justify-self: stretch;
+    width: 100%;
     flex-wrap: wrap;
+    gap: 8px;
   }
 
   .kpi-grid {
@@ -1207,44 +1227,239 @@ body.cart-open {
 }
 
 @media (max-width: 860px) {
+  .wrapper {
+    width: min(1240px, 95vw);
+  }
+
+  .dashboard-header {
+    margin-top: 16px;
+    padding: 16px;
+  }
+
+  .brand-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+  }
+
+  .brand-block h1 {
+    font-size: clamp(1.18rem, 5.2vw, 1.72rem);
+    letter-spacing: 0.07em;
+  }
+
+  .quick-nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+  }
+
+  .quick-nav a,
+  .quick-nav .admin-toggle,
+  .quick-nav .cart-toggle {
+    width: 100%;
+    min-height: 42px;
+    justify-content: center;
+    padding: 10px 12px;
+    font-size: 0.74rem;
+    letter-spacing: 0.07em;
+  }
+
+  .panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .category-header p {
+    margin-top: 0;
+  }
+
+  .shelf-panel {
+    padding: 16px;
+  }
+
   .shelf-carousel {
     --cards-per-view: 2;
   }
 
+  .carousel-arrow {
+    width: 36px;
+    height: 36px;
+    font-size: 1.45rem;
+  }
+
   .carousel-arrow.prev {
-    left: 8px;
+    left: 6px;
   }
 
   .carousel-arrow.next {
-    right: 8px;
+    right: 6px;
   }
 }
 
 @media (max-width: 680px) {
   .wrapper {
-    width: min(1240px, 95vw);
+    width: min(1240px, 94vw);
+  }
+
+  .bg-left {
+    width: 520px;
+    height: 520px;
+    left: -260px;
+    top: -180px;
+  }
+
+  .bg-right {
+    width: 520px;
+    height: 520px;
+    right: -260px;
+    bottom: -280px;
   }
 
   .page-grid {
-    padding-bottom: 24px;
+    padding: 14px 0 22px;
   }
 
   .kpi-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .kpi-card {
+    padding: 14px;
+  }
+
+  .kpi-card p {
+    font-size: 0.76rem;
+  }
+
+  .kpi-card strong {
+    font-size: clamp(1.34rem, 6.3vw, 1.7rem);
   }
 
   .panel,
   .dashboard-header {
-    border-radius: 18px;
-    padding: 14px;
+    border-radius: 16px;
+    padding: 12px;
+  }
+
+  .dashboard-header {
+    margin-top: 14px;
+  }
+
+  .brand-block {
+    gap: 10px;
+  }
+
+  .brand-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+    border-radius: 10px;
+  }
+
+  .brand-block h1 {
+    font-size: clamp(1.05rem, 6.2vw, 1.42rem);
+    letter-spacing: 0.06em;
+  }
+
+  .quick-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .quick-nav a,
+  .quick-nav .admin-toggle,
+  .quick-nav .cart-toggle {
+    min-height: 40px;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    padding: 9px 10px;
+  }
+
+  .shelf-panel {
+    padding: 12px;
+  }
+
+  .panel-header h2 {
+    font-size: clamp(1.32rem, 7vw, 1.66rem);
+  }
+
+  .category-header p {
+    font-size: 0.88rem;
   }
 
   .shelf-carousel {
     --cards-per-view: 1;
+    --cards-gap: 10px;
+  }
+
+  .carousel-viewport {
+    padding: 4px 1px 10px;
+  }
+
+  .carousel-arrow {
+    top: 42%;
+    width: 34px;
+    height: 34px;
+    font-size: 1.3rem;
+  }
+
+  .carousel-arrow.prev {
+    left: 4px;
+  }
+
+  .carousel-arrow.next {
+    right: 4px;
+  }
+
+  .wine-card {
+    border-radius: 14px;
+  }
+
+  .wine-card img {
+    aspect-ratio: 4 / 5;
+  }
+
+  .wine-body {
+    padding: 11px;
+    gap: 6px;
+  }
+
+  .wine-body h3 {
+    font-size: 1.08rem;
+  }
+
+  .wine-origin {
+    font-size: 0.74rem;
+  }
+
+  .wine-description {
+    --description-max-lines: 6;
+    font-size: 0.88rem;
+  }
+
+  .wine-footer strong {
+    font-size: 1.14rem;
   }
 
   .cart-panel {
     width: 100%;
+    padding: calc(16px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+    gap: 10px;
+  }
+
+  .cart-panel-header h2 {
+    font-size: 1.72rem;
+  }
+
+  .cart-items {
+    gap: 8px;
+  }
+
+  .cart-item {
+    padding: 10px;
   }
 
   .cart-item {
@@ -1256,12 +1471,32 @@ body.cart-open {
     align-self: flex-end;
   }
 
+  .cart-summary span {
+    font-size: 0.78rem;
+  }
+
+  .cart-summary strong {
+    font-size: 1.24rem;
+  }
+
+  .cart-checkout {
+    margin-top: 8px;
+    padding: 10px 14px;
+    font-size: 0.78rem;
+  }
+
   .admin-panel {
     width: 100%;
+    padding: calc(16px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+    gap: 10px;
   }
 
   .admin-panel.is-admin-view {
     width: 100%;
+  }
+
+  .admin-panel-header h2 {
+    font-size: 1.72rem;
   }
 
   .admin-editor-grid {
@@ -1281,6 +1516,15 @@ body.cart-open {
     grid-template-columns: 1fr;
   }
 
+  .admin-user-list {
+    max-height: none;
+  }
+
+  .admin-form button,
+  .admin-logout {
+    width: 100%;
+  }
+
   .wine-footer {
     flex-direction: column;
     align-items: stretch;
@@ -1290,7 +1534,33 @@ body.cart-open {
     width: 100%;
   }
 
-  .wine-description {
-    --description-max-lines: 7;
+  .admin-user-list-panel {
+    padding: 9px;
+  }
+}
+
+@media (max-width: 460px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-nav {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-nav a,
+  .quick-nav .admin-toggle,
+  .quick-nav .cart-toggle {
+    font-size: 0.72rem;
+  }
+
+  .cart-summary {
+    gap: 6px;
+  }
+
+  .carousel-arrow {
+    width: 32px;
+    height: 32px;
+    font-size: 1.15rem;
   }
 }
