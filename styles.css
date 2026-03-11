@@ -252,12 +252,12 @@ body.cart-open {
   margin-top: 14px;
   display: grid;
   gap: 14px;
-  justify-items: center;
+  width: 100%;
 }
 
 .shelf-panel {
   padding: 18px;
-  width: min(100%, 1160px);
+  width: 100%;
 }
 
 .panel-header {
