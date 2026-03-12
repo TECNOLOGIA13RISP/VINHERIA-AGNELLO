@@ -543,6 +543,7 @@ body.cart-open {
   z-index: 60;
   width: min(380px, 94vw);
   height: 100vh;
+  height: 100dvh;
   padding: 22px 18px;
   display: flex;
   flex-direction: column;
@@ -595,6 +596,8 @@ body.cart-open {
   padding: 0;
   list-style: none;
   display: grid;
+  align-content: start;
+  grid-auto-rows: max-content;
   gap: 10px;
   flex: 1;
   min-height: 0;
