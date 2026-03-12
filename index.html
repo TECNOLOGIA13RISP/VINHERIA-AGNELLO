@@ -618,6 +618,8 @@
       const LEGACY_ADMIN_STORAGE_KEY = 'vinheria_admin_wines_v1';
       const CUSTOM_USERS_STORAGE_KEY = 'vinheria_custom_users_v1';
       const USER_PURCHASE_HISTORY_STORAGE_KEY = 'vinheria_user_purchase_history_v1';
+      const CATALOG_SYNC_ENDPOINT = '/api/catalog';
+      const CATALOG_SYNC_DEBOUNCE_MS = 650;
       const AUTH_ROLE_KEY = 'vinheria_auth_role_v1';
       const AUTH_USER_NAME_KEY = 'vinheria_auth_user_name_v1';
       const ADMIN_CREDENTIALS = {
@@ -659,6 +661,10 @@
       let adminWineSearchTerm = '';
       let cartFeedbackTimer;
       let adminFeedbackTimer;
+      let catalogSyncTimer;
+      let catalogSyncInFlight = false;
+      let catalogSyncQueued = false;
+      let remoteCatalogSyncAvailable = false;
 
       const applyCartCount = () => {
         cartCount = 0;
@@ -1013,6 +1019,133 @@
           imageUrl: imageUrl || buildFallbackWineImage({ type: normalizedType, name }),
           available: wine.available !== false,
         };
+      };
+
+      const toCatalogFingerprint = (wines) => {
+        if (!Array.isArray(wines)) {
+          return '';
+        }
+
+        return wines
+          .map((wine) => {
+            const normalized = normalizeWine(wine);
+            if (!normalized) {
+              return '';
+            }
+
+            const normalizedPrice = Number(normalized.price).toFixed(2);
+            return [
+              normalized.type,
+              normalizeSearchText(normalized.name),
+              normalizeSearchText(normalized.country),
+              normalizeSearchText(normalized.description),
+              normalizedPrice,
+              String(normalized.imageUrl || '').trim(),
+              normalized.available ? '1' : '0',
+            ].join('|');
+          })
+          .filter(Boolean)
+          .sort()
+          .join('||');
+      };
+
+      const fetchRemoteCatalogSnapshot = async () => {
+        try {
+          const response = await fetch(CATALOG_SYNC_ENDPOINT, {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+              Accept: 'application/json',
+            },
+          });
+
+          if (response.status === 404) {
+            remoteCatalogSyncAvailable = true;
+            return {
+              catalog: [],
+              updatedAt: '',
+            };
+          }
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          remoteCatalogSyncAvailable = true;
+          const payload = await response.json();
+          const normalizedCatalog = Array.isArray(payload?.catalog) ? payload.catalog.map((wine) => normalizeWine(wine)).filter(Boolean) : [];
+
+          return {
+            catalog: normalizedCatalog,
+            updatedAt: typeof payload?.updatedAt === 'string' ? payload.updatedAt : '',
+          };
+        } catch (error) {
+          remoteCatalogSyncAvailable = false;
+          console.warn('Falha ao consultar o catalogo remoto.', error);
+          return null;
+        }
+      };
+
+      const pushCatalogToRemote = async () => {
+        if (!remoteCatalogSyncAvailable) {
+          return false;
+        }
+
+        const payload = {
+          catalog: catalogWines.map((wine) => ({
+            id: wine.id,
+            name: wine.name,
+            type: wine.type,
+            country: wine.country,
+            price: wine.price,
+            description: wine.description,
+            imageUrl: wine.imageUrl,
+            available: wine.available !== false,
+          })),
+          updatedAt: new Date().toISOString(),
+        };
+
+        const response = await fetch(CATALOG_SYNC_ENDPOINT, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return true;
+      };
+
+      const queueRemoteCatalogSync = (delay = CATALOG_SYNC_DEBOUNCE_MS) => {
+        if (!remoteCatalogSyncAvailable) {
+          return;
+        }
+
+        window.clearTimeout(catalogSyncTimer);
+        catalogSyncTimer = window.setTimeout(async () => {
+          if (catalogSyncInFlight) {
+            catalogSyncQueued = true;
+            return;
+          }
+
+          catalogSyncInFlight = true;
+          try {
+            await pushCatalogToRemote();
+          } catch (error) {
+            console.warn('Falha ao sincronizar o catalogo remoto.', error);
+          } finally {
+            catalogSyncInFlight = false;
+
+            if (catalogSyncQueued) {
+              catalogSyncQueued = false;
+              queueRemoteCatalogSync(200);
+            }
+          }
+        }, delay);
       };
 
       function setAdminOpen(isOpen, options = {}) {
@@ -1410,8 +1543,13 @@
         showTemporaryCartFeedback(`${wineName} adicionado ao carrinho.`);
       };
 
-      const persistCatalogWines = () => {
+      const persistCatalogWines = (options = {}) => {
+        const { syncRemote = true } = options;
         window.localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(catalogWines));
+
+        if (syncRemote) {
+          queueRemoteCatalogSync();
+        }
       };
 
       const collectInitialCatalogWines = () => {
@@ -1526,18 +1664,37 @@
         renderUserArea();
       };
 
-      const loadCatalogWines = () => {
-        const fromStorage = readStoredCatalogWines();
-        if (fromStorage.length > 0) {
-          catalogWines.splice(0, catalogWines.length, ...fromStorage);
-          persistCatalogWines();
+      const loadCatalogWines = async () => {
+        const initialCatalog = collectInitialCatalogWines();
+        const initialFingerprint = toCatalogFingerprint(initialCatalog);
+        const remoteSnapshot = await fetchRemoteCatalogSnapshot();
+
+        if (remoteSnapshot?.catalog?.length) {
+          catalogWines.splice(0, catalogWines.length, ...remoteSnapshot.catalog);
+          persistCatalogWines({ syncRemote: false });
           return;
         }
 
-        const initialCatalog = collectInitialCatalogWines();
+        const fromStorage = readStoredCatalogWines();
+        if (fromStorage.length > 0) {
+          catalogWines.splice(0, catalogWines.length, ...fromStorage);
+          persistCatalogWines({ syncRemote: false });
+
+          const storedFingerprint = toCatalogFingerprint(fromStorage);
+          const hasCustomCatalog = storedFingerprint !== initialFingerprint;
+          if (remoteSnapshot && hasCustomCatalog) {
+            queueRemoteCatalogSync(200);
+          }
+          return;
+        }
+
         const legacyAdminWines = readLegacyAdminWines();
         catalogWines.splice(0, catalogWines.length, ...initialCatalog, ...legacyAdminWines);
-        persistCatalogWines();
+        persistCatalogWines({ syncRemote: false });
+
+        if (remoteSnapshot && legacyAdminWines.length > 0) {
+          queueRemoteCatalogSync(200);
+        }
       };
 
       const createWineCardElement = (wine) => {
@@ -2005,12 +2162,20 @@
         }
       });
 
-      loadCatalogWines();
-      loadCustomUsers();
-      loadUserPurchaseHistory();
-      renderCatalog();
-      renderAdminEditor();
-      renderAdminUsers();
+      const initializeDashboard = async () => {
+        await loadCatalogWines();
+        loadCustomUsers();
+        loadUserPurchaseHistory();
+        renderCatalog();
+        renderAdminEditor();
+        renderAdminUsers();
+        updateAdminAuthUI();
+        applyWineStats();
+        applyCartCount();
+        renderCart();
+      };
+
+      initializeDashboard();
 
       document.addEventListener('click', (event) => {
         const addButton = event.target.closest('[data-add-cart]');
@@ -2278,10 +2443,6 @@
         }
       });
 
-      updateAdminAuthUI();
-      applyWineStats();
-      applyCartCount();
-      renderCart();
     </script>
   </body>
 </html>
