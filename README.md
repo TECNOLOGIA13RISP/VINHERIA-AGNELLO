@@ -13,7 +13,7 @@ Tecnologias usadas:
 HTML, CSS e JavaScript no front-end.
 APIs serverless na Vercel com Vercel Blob para armazenamento.
 
-Projeto
+Projeto:
 vinheria-agnello-13ris-projects.vercel.app
 
 Usuarios
